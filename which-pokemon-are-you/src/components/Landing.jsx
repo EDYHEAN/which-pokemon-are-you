@@ -1,5 +1,37 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import s from './Landing.module.css'
+
+const gen1Pool = [
+  { id: 4,   name: 'Salamèche' },
+  { id: 7,   name: 'Carapuce'  },
+  { id: 1,   name: 'Bulbizarre'},
+  { id: 25,  name: 'Pikachu'   },
+  { id: 39,  name: 'Rondoudou' },
+  { id: 52,  name: 'Miaouss'   },
+  { id: 54,  name: 'Psykokwak' },
+  { id: 63,  name: 'Abra'      },
+  { id: 94,  name: 'Ectoplasma'},
+  { id: 133, name: 'Évoli'     },
+  { id: 129, name: 'Magicarpe' },
+  { id: 143, name: 'Ronflex'   },
+  { id: 131, name: 'Lokhlass'  },
+  { id: 113, name: 'Leveinard' },
+  { id: 58,  name: 'Caninos'   },
+  { id: 79,  name: 'Ramoloss'  },
+  { id: 137, name: 'Porygon'   },
+  { id: 147, name: 'Minidraco' },
+  { id: 106, name: 'Kicklee'   },
+  { id: 132, name: 'Métamorph' },
+]
+
+const phrases = [
+  "Ce sera {name} ?",
+  "Peut-être {name} ?",
+  "Et si c'était {name} ?",
+  "Ton destin : {name} ?",
+  "On dirait {name}...",
+  "{name} t'attend ?",
+]
 
 function SunIcon() {
   return (
@@ -40,6 +72,23 @@ function Pokeball() {
 
 export default function Landing() {
   const [isNight, setIsNight] = useState(true)
+  const [hoverPokemon, setHoverPokemon] = useState(null)
+  const [isExiting, setIsExiting] = useState(false)
+
+  const handleCtaEnter = useCallback(() => {
+    const pokemon = gen1Pool[Math.floor(Math.random() * gen1Pool.length)]
+    const template = phrases[Math.floor(Math.random() * phrases.length)]
+    setIsExiting(false)
+    setHoverPokemon({ ...pokemon, phrase: template.replace('{name}', pokemon.name) })
+  }, [])
+
+  const handleCtaLeave = useCallback(() => {
+    setIsExiting(true)
+    setTimeout(() => {
+      setHoverPokemon(null)
+      setIsExiting(false)
+    }, 220)
+  }, [])
 
   const stars = useMemo(() =>
     Array.from({ length: 40 }, (_, i) => ({
@@ -135,9 +184,25 @@ export default function Landing() {
       </div>
 
       {/* 7 — CTA */}
-      <button className={`${s.cta} ${s.section}`}>
-        <Pokeball />
-        Choose your Pokémon
+      <button
+        className={`${s.cta} ${s.section}`}
+        onMouseEnter={handleCtaEnter}
+        onMouseLeave={handleCtaLeave}
+      >
+        <span className={`${s.ctaDefault} ${hoverPokemon && !isExiting ? s.ctaDefaultOut : ''} ${isExiting ? s.ctaDefaultIn : ''}`}>
+          <Pokeball />
+          Choose your Pokémon
+        </span>
+        <span className={`${s.ctaHoverContent} ${hoverPokemon && !isExiting ? s.ctaHoverIn : ''} ${isExiting ? s.ctaHoverOut : ''}`}>
+          {hoverPokemon && (
+            <img
+              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${hoverPokemon.id}.png`}
+              alt={hoverPokemon.name}
+              className={s.ctaSprite}
+            />
+          )}
+          {hoverPokemon?.phrase}
+        </span>
       </button>
 
       {/* 8 — Fine print */}

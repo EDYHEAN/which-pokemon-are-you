@@ -1,15 +1,9 @@
 /* ── Keyframes ─────────────────────────────────────────────── */
 
-@keyframes float {
-  0%   { transform: translateY(0); }
-  50%  { transform: translateY(-14px); }
-  100% { transform: translateY(0); }
-}
-
 @keyframes fadeUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(18px);
   }
   to {
     opacity: 1;
@@ -17,7 +11,23 @@
   }
 }
 
-/* ── Page wrapper ───────────────────────────────────────────── */
+@keyframes float {
+  0%   { transform: translateY(0); }
+  50%  { transform: translateY(-12px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.75); }
+}
+
+@keyframes shimmer {
+  0%   { transform: translateX(-180%) skewX(-16deg); }
+  100% { transform: translateX(280%)  skewX(-16deg); }
+}
+
+/* ── Page ───────────────────────────────────────────────────── */
 
 .page {
   display: flex;
@@ -25,8 +35,8 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: 56px 24px;
-  gap: 28px;
+  padding: 52px 24px;
+  gap: 24px;
   background: #fff;
 }
 
@@ -34,16 +44,44 @@
 
 .section {
   opacity: 0;
-  animation: fadeUp 0.7s ease forwards;
+  animation: fadeUp 0.65s ease forwards;
 }
 
 .section:nth-child(1) { animation-delay: 0.05s; }
-.section:nth-child(2) { animation-delay: 0.18s; }
-.section:nth-child(3) { animation-delay: 0.30s; }
-.section:nth-child(4) { animation-delay: 0.42s; }
-.section:nth-child(5) { animation-delay: 0.54s; }
-.section:nth-child(6) { animation-delay: 0.64s; }
-.section:nth-child(7) { animation-delay: 0.74s; }
+.section:nth-child(2) { animation-delay: 0.15s; }
+.section:nth-child(3) { animation-delay: 0.26s; }
+.section:nth-child(4) { animation-delay: 0.37s; }
+.section:nth-child(5) { animation-delay: 0.47s; }
+.section:nth-child(6) { animation-delay: 0.56s; }
+.section:nth-child(7) { animation-delay: 0.65s; }
+.section:nth-child(8) { animation-delay: 0.74s; }
+.section:nth-child(9) { animation-delay: 0.82s; }
+
+/* ── Badge ──────────────────────────────────────────────────── */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border: 1px solid #e8e8e8;
+  border-radius: 999px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4ade80;
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
 
 /* ── Eyebrow ────────────────────────────────────────────────── */
 
@@ -51,71 +89,38 @@
   font-family: 'DM Sans', sans-serif;
   font-size: 10px;
   font-weight: 400;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
   color: #bbb;
   text-align: center;
 }
 
-/* ── Carousel ───────────────────────────────────────────────── */
+/* ── Hero ───────────────────────────────────────────────────── */
 
-.carouselWrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-}
-
-.carouselFrame {
-  position: relative;
-  width: 210px;
-  height: 210px;
+.heroWrapper {
+  width: 200px;
+  height: 200px;
   animation: float 5s ease-in-out infinite;
 }
 
-.pokemonImg {
-  position: absolute;
-  inset: 0;
+.hero {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  opacity: 0;
-  transition: opacity 0.9s ease;
-  pointer-events: none;
   user-select: none;
-}
-
-.pokemonImg.active {
-  opacity: 1;
-}
-
-.dots {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #ddd;
-  transition: background 0.3s ease;
-}
-
-.dot.activeDot {
-  background: #111;
+  pointer-events: none;
 }
 
 /* ── Title ──────────────────────────────────────────────────── */
 
 .title {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 52px;
+  font-size: 50px;
   font-weight: 400;
   line-height: 1.08;
   text-align: center;
   color: #111;
+  margin: 0;
 }
 
 .titleItalic {
@@ -126,12 +131,13 @@
 
 .subtitle {
   font-family: 'DM Sans', sans-serif;
-  font-size: 13.5px;
+  font-size: 13px;
   font-weight: 300;
   line-height: 1.65;
   color: #888;
   text-align: center;
-  max-width: 290px;
+  max-width: 270px;
+  margin: 0;
 }
 
 /* ── Divider ────────────────────────────────────────────────── */
@@ -140,42 +146,41 @@
   width: 100%;
   max-width: 320px;
   height: 1px;
-  background: #e8e8e8;
+  background: #ebebeb;
 }
 
-/* ── Stats ──────────────────────────────────────────────────── */
+/* ── Features ───────────────────────────────────────────────── */
 
-.stats {
+.features {
   display: flex;
   align-items: stretch;
-  gap: 0;
 }
 
-.stat {
+.feature {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 0 28px;
+  padding: 0 26px;
 }
 
-.stat + .stat {
-  border-left: 1px solid #e8e8e8;
+.feature + .feature {
+  border-left: 1px solid #ebebeb;
 }
 
-.statNumber {
+.featureWord {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 400;
   color: #111;
   line-height: 1;
 }
 
-.statLabel {
+.featureSub {
   font-family: 'DM Sans', sans-serif;
-  font-size: 9.5px;
+  font-size: 9px;
   font-weight: 400;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #aaa;
 }
@@ -191,13 +196,34 @@
   background: #111;
   border: none;
   border-radius: 999px;
-  padding: 16px 36px;
+  padding: 16px 0;
+  width: 100%;
+  max-width: 320px;
   cursor: pointer;
+  position: relative;
+  overflow: hidden;
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
+.cta::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.22) 50%,
+    transparent 100%
+  );
+  animation: shimmer 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
 .cta:hover {
-  opacity: 0.7;
+  opacity: 0.85;
   transform: translateY(-2px);
 }
 
@@ -205,10 +231,11 @@
 
 .finePrint {
   font-family: 'DM Sans', sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 400;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: #ccc;
   text-align: center;
+  margin: 0;
 }

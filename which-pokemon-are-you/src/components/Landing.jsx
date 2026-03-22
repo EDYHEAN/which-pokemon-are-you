@@ -1,87 +1,66 @@
-import { useState, useEffect } from 'react'
 import s from './Landing.module.css'
 
-const POKEMON_IDS = [249, 448, 282, 384, 644, 800, 888, 6]
-
-const STATS = [
-  { number: '1025', label: 'Pokémon' },
-  { number: '7',    label: 'Situations' },
-  { number: '2 min', label: 'Experience' },
-]
-
 export default function Landing() {
-  const [active, setActive] = useState(0)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActive(i => (i + 1) % POKEMON_IDS.length)
-    }, 2200)
-    return () => clearInterval(interval)
-  }, [])
-
   return (
     <main className={s.page}>
 
-      {/* 1 — Eyebrow */}
-      <p className={`${s.eyebrow} ${s.section}`}>
-        Pokémon × Personality
-      </p>
-
-      {/* 2 — Carousel */}
-      <div className={`${s.carouselWrapper} ${s.section}`}>
-        <div className={s.carouselFrame}>
-          {POKEMON_IDS.map((id, i) => (
-            <img
-              key={id}
-              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`}
-              alt=""
-              className={`${s.pokemonImg} ${i === active ? s.active : ''}`}
-              draggable={false}
-            />
-          ))}
-        </div>
-        <div className={s.dots}>
-          {POKEMON_IDS.map((id, i) => (
-            <span
-              key={id}
-              className={`${s.dot} ${i === active ? s.activeDot : ''}`}
-            />
-          ))}
-        </div>
+      {/* 1 — Badge */}
+      <div className={`${s.badge} ${s.section}`}>
+        <span className={s.dot} />
+        Your pocket companion
       </div>
 
-      {/* 3 — Title */}
+      {/* 2 — Eyebrow */}
+      <p className={`${s.eyebrow} ${s.section}`}>
+        Pokémon × Tamagotchi
+      </p>
+
+      {/* 3 — Hero */}
+      <div className={`${s.heroWrapper} ${s.section}`}>
+        <img
+          src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/39.png"
+          alt="Jigglypuff"
+          className={s.hero}
+          draggable={false}
+        />
+      </div>
+
+      {/* 4 — Title */}
       <h1 className={`${s.title} ${s.section}`}>
-        Meet your<br />
+        Raise your<br />
         <span className={s.titleItalic}>Pokémon.</span>
       </h1>
 
-      {/* 4 — Subtitle */}
+      {/* 5 — Subtitle */}
       <p className={`${s.subtitle} ${s.section}`}>
-        7 real situations. Analyzed by AI. One Pokémon — from 1025 — that's entirely yours.
+        Choose your companion. Feed it, play with it, watch it grow. A living Pokédex — just for you.
       </p>
 
-      {/* 5 — Divider */}
+      {/* 6 — Divider */}
       <div className={`${s.divider} ${s.section}`} />
 
-      {/* 6 — Stats */}
-      <div className={`${s.stats} ${s.section}`}>
-        {STATS.map(({ number, label }) => (
-          <div key={label} className={s.stat}>
-            <span className={s.statNumber}>{number}</span>
-            <span className={s.statLabel}>{label}</span>
+      {/* 7 — Features */}
+      <div className={`${s.features} ${s.section}`}>
+        {[
+          { word: 'Feed',  sub: '& care'  },
+          { word: 'Play',  sub: '& bond'  },
+          { word: 'Grow',  sub: '& evolve'},
+        ].map(({ word, sub }) => (
+          <div key={word} className={s.feature}>
+            <span className={s.featureWord}>{word}</span>
+            <span className={s.featureSub}>{sub}</span>
           </div>
         ))}
       </div>
 
-      {/* 7 — CTA */}
+      {/* 8 — CTA */}
       <button className={`${s.cta} ${s.section}`}>
-        Begin the experience →
+        Choose your Pokémon →
       </button>
 
-      {/* 8 — Fine print */}
+      {/* 9 — Fine print */}
       <p className={`${s.finePrint} ${s.section}`}>
-        Free · AI-powered · Shareable
+        Free · No account needed
       </p>
 
     </main>

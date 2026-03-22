@@ -12,7 +12,7 @@ html, body {
 
 body {
   font-family: 'DM Sans', system-ui, sans-serif;
-  background: #fff;
+  background: #F7F4EF;
   color: #111;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -22,4 +22,10 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+@media (min-width: 768px) {
+  .charizard-bg {
+    display: block !important;
+  }
 }

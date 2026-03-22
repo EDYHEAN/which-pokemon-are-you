@@ -1,20 +1,23 @@
 /* ── Keyframes ─────────────────────────────────────────────── */
 
 @keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes float {
-  0%   { transform: translateY(0); }
-  50%  { transform: translateY(-12px); }
-  100% { transform: translateY(0); }
+@keyframes wobble {
+  0%   { transform: rotate(0deg) translateY(0); }
+  10%  { transform: rotate(-8deg) translateY(-6px); }
+  20%  { transform: rotate(8deg) translateY(-8px); }
+  30%  { transform: rotate(-6deg) translateY(-6px); }
+  40%  { transform: rotate(6deg) translateY(-7px); }
+  50%  { transform: rotate(0deg) translateY(0); }
+  100% { transform: rotate(0deg) translateY(0); }
+}
+
+@keyframes crack-glow {
+  0%, 45%, 100% { filter: drop-shadow(0 0 0px rgba(255, 220, 100, 0)); }
+  50%            { filter: drop-shadow(0 0 18px rgba(255, 220, 100, 0.6)); }
 }
 
 @keyframes pulse {
@@ -27,6 +30,23 @@
   100% { transform: translateX(280%)  skewX(-16deg); }
 }
 
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes drift {
+  0%   { transform: translateX(0px); }
+  50%  { transform: translateX(25px); }
+  100% { transform: translateX(0px); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2;  transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.4); }
+}
+
 /* ── Page ───────────────────────────────────────────────────── */
 
 .page {
@@ -37,25 +57,167 @@
   min-height: 100vh;
   padding: 52px 24px;
   gap: 24px;
-  background: #fff;
+  position: relative;
+  overflow: hidden;
 }
 
-/* ── Staggered entry ────────────────────────────────────────── */
+/* ── Backgrounds ────────────────────────────────────────────── */
+
+.bgLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.bgDay,
+.bgNight {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.8s ease;
+}
+
+.bgDay   { background: linear-gradient(180deg, #FFE8C8 0%, #FFD4A8 20%, #F0EDE8 60%, #F7F4EF 100%); opacity: 1; }
+.bgNight { background: linear-gradient(180deg, #0F1B2D 0%, #1a1a2e 50%, #2d1b3d 100%); opacity: 0; }
+
+.night .bgDay   { opacity: 0; }
+.night .bgNight { opacity: 1; }
+
+/* ── Sections — above bg layer ──────────────────────────────── */
 
 .section {
+  position: relative;
+  z-index: 1;
   opacity: 0;
   animation: fadeUp 0.65s ease forwards;
 }
 
-.section:nth-child(1) { animation-delay: 0.05s; }
-.section:nth-child(2) { animation-delay: 0.15s; }
-.section:nth-child(3) { animation-delay: 0.26s; }
-.section:nth-child(4) { animation-delay: 0.37s; }
-.section:nth-child(5) { animation-delay: 0.47s; }
-.section:nth-child(6) { animation-delay: 0.56s; }
-.section:nth-child(7) { animation-delay: 0.65s; }
-.section:nth-child(8) { animation-delay: 0.74s; }
-.section:nth-child(9) { animation-delay: 0.82s; }
+/* toggle + bgLayer are children 1 & 2 */
+.section:nth-child(3)  { animation-delay: 0.05s; }
+.section:nth-child(4)  { animation-delay: 0.18s; }
+.section:nth-child(5)  { animation-delay: 0.30s; }
+.section:nth-child(6)  { animation-delay: 0.42s; }
+.section:nth-child(7)  { animation-delay: 0.52s; }
+.section:nth-child(8)  { animation-delay: 0.62s; }
+.section:nth-child(9)  { animation-delay: 0.71s; }
+.section:nth-child(10) { animation-delay: 0.80s; }
+
+/* ── Toggle button ──────────────────────────────────────────── */
+
+.toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #333;
+  transition: all 0.8s ease;
+}
+
+.night .toggle {
+  color: #F0EDE8;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ── Clouds ─────────────────────────────────────────────────── */
+
+.cloud {
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(255, 252, 245, 0.9);
+  pointer-events: none;
+  animation-name: drift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  transition: opacity 0.8s ease;
+}
+
+.cloud::before,
+.cloud::after {
+  content: '';
+  position: absolute;
+  background: rgba(255, 252, 245, 0.9);
+  border-radius: 50%;
+}
+
+/* Day clouds */
+.day .cloud  { opacity: 0.7; }
+
+/* Sun glow — desktop day only */
+.sun {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .day .sun {
+    display: block;
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 200, 80, 0.3) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+/* Night clouds */
+.night .cloud  { opacity: 0.08; }
+.night .cloud3 { opacity: 0; }
+
+.cloud1 {
+  width: 140px;
+  height: 38px;
+  top: 7%;
+  left: -20px;
+  animation-duration: 35s;
+}
+.cloud1::before { width: 60px; height: 60px; top: -24px; left: 20px; }
+.cloud1::after  { width: 44px; height: 44px; top: -18px; left: 68px; }
+
+.cloud2 {
+  width: 110px;
+  height: 30px;
+  top: 20%;
+  right: -10px;
+  animation-duration: 50s;
+  animation-delay: 8s;
+}
+.cloud2::before { width: 46px; height: 46px; top: -20px; left: 16px; }
+.cloud2::after  { width: 34px; height: 34px; top: -14px; left: 54px; }
+
+.cloud3 {
+  width: 160px;
+  height: 44px;
+  top: 52%;
+  left: 8%;
+  animation-duration: 65s;
+  animation-delay: 4s;
+}
+.cloud3::before { width: 70px; height: 70px; top: -28px; left: 24px; }
+.cloud3::after  { width: 52px; height: 52px; top: -20px; left: 82px; }
+
+/* ── Stars ──────────────────────────────────────────────────── */
+
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  animation: twinkle ease-in-out infinite;
+}
 
 /* ── Badge ──────────────────────────────────────────────────── */
 
@@ -64,14 +226,26 @@
   align-items: center;
   gap: 7px;
   padding: 6px 14px;
-  border: 1px solid #e8e8e8;
   border-radius: 999px;
   font-family: 'DM Sans', sans-serif;
   font-size: 10px;
-  font-weight: 400;
+  font-weight: 300;
   letter-spacing: 0.18em;
   text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   color: #888;
+  transition: background 0.8s ease, border-color 0.8s ease, color 0.8s ease;
+}
+
+.day .badge {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.night .badge {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #999;
 }
 
 .dot {
@@ -83,32 +257,36 @@
   animation: pulse 2s ease-in-out infinite;
 }
 
-/* ── Eyebrow ────────────────────────────────────────────────── */
-
-.eyebrow {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 10px;
-  font-weight: 400;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: #bbb;
-  text-align: center;
-}
-
-/* ── Hero ───────────────────────────────────────────────────── */
+/* ── Hero — Egg ─────────────────────────────────────────────── */
 
 .heroWrapper {
-  width: 200px;
-  height: 200px;
-  animation: float 5s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
 
-.hero {
-  width: 100%;
-  height: 100%;
+.eggRing {
+  padding: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow:
+    0 0 20px rgba(255, 255, 255, 0.08),
+    inset 0 0 20px rgba(255, 255, 255, 0.04);
+}
+
+.eggImg {
+  width: 120px;
+  height: 120px;
   object-fit: contain;
+  display: block;
   user-select: none;
   pointer-events: none;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+  animation:
+    wobble     2.5s ease-in-out infinite,
+    crack-glow 2.5s ease-in-out infinite;
 }
 
 /* ── Title ──────────────────────────────────────────────────── */
@@ -116,16 +294,17 @@
 .title {
   font-family: 'Cormorant Garamond', serif;
   font-size: 50px;
-  font-weight: 400;
+  font-weight: 300;
   line-height: 1.08;
   text-align: center;
-  color: #111;
+  color: #1a1a1a;
   margin: 0;
+  transition: color 0.8s ease;
 }
 
-.titleItalic {
-  font-style: italic;
-}
+.night .title { color: #F0EDE8; }
+
+.titleItalic { font-style: italic; }
 
 /* ── Subtitle ───────────────────────────────────────────────── */
 
@@ -138,7 +317,11 @@
   text-align: center;
   max-width: 270px;
   margin: 0;
+  transition: color 0.8s ease;
 }
+
+.day   .subtitle { color: #6b6b6b; }
+.night .subtitle { color: #aaa; }
 
 /* ── Divider ────────────────────────────────────────────────── */
 
@@ -146,14 +329,30 @@
   width: 100%;
   max-width: 320px;
   height: 1px;
-  background: #ebebeb;
+  background: rgba(255, 255, 255, 0.8);
+  transition: background 0.8s ease;
 }
+
+.night .divider { background: rgba(255, 255, 255, 0.1); }
 
 /* ── Features ───────────────────────────────────────────────── */
 
 .features {
   display: flex;
   align-items: stretch;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  padding: 14px 0;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: background 0.8s ease, border-color 0.8s ease, box-shadow 0.8s ease;
+}
+
+.night .features {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .feature {
@@ -165,36 +364,46 @@
 }
 
 .feature + .feature {
-  border-left: 1px solid #ebebeb;
+  border-left: 1px solid rgba(255, 255, 255, 0.8);
+  transition: border-color 0.8s ease;
 }
+
+.night .feature + .feature { border-color: rgba(255, 255, 255, 0.12); }
 
 .featureWord {
   font-family: 'Cormorant Garamond', serif;
   font-size: 28px;
-  font-weight: 400;
+  font-weight: 300;
   color: #111;
   line-height: 1;
+  transition: color 0.8s ease;
 }
+
+.night .featureWord { color: #F0EDE8; }
 
 .featureSub {
   font-family: 'DM Sans', sans-serif;
   font-size: 9px;
-  font-weight: 400;
+  font-weight: 300;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #aaa;
+  transition: color 0.8s ease;
 }
+
+.night .featureSub { color: #888; }
 
 /* ── CTA ────────────────────────────────────────────────────── */
 
 .cta {
   font-family: 'DM Sans', sans-serif;
   font-size: 14px;
-  font-weight: 400;
-  letter-spacing: 0.01em;
-  color: #fff;
-  background: #111;
-  border: none;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  color: #111;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 999px;
   padding: 16px 0;
   width: 100%;
@@ -202,7 +411,17 @@
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: background 0.8s ease, border-color 0.8s ease, box-shadow 0.8s ease, opacity 0.2s ease, transform 0.2s ease;
+}
+
+.night .cta {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 
 .cta::after {
@@ -212,12 +431,7 @@
   left: 0;
   width: 40%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.22) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.55) 50%, transparent 100%);
   animation: shimmer 2.4s ease-in-out infinite;
   pointer-events: none;
 }
@@ -227,15 +441,25 @@
   transform: translateY(-2px);
 }
 
+.pokeball {
+  flex-shrink: 0;
+  margin-right: 12px;
+  vertical-align: middle;
+  animation: spin 4s linear infinite;
+}
+
 /* ── Fine print ─────────────────────────────────────────────── */
 
 .finePrint {
   font-family: 'DM Sans', sans-serif;
   font-size: 10px;
-  font-weight: 400;
+  font-weight: 300;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #ccc;
+  color: #bbb;
   text-align: center;
   margin: 0;
+  transition: color 0.8s ease;
 }
+
+.night .finePrint { color: #666; }

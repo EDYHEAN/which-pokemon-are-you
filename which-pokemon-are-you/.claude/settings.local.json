@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npm run:*)",
       "Bash(git:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(lsof -ti:5174)"
     ]
   }
 }

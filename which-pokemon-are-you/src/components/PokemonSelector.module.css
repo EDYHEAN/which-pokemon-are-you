@@ -1,0 +1,541 @@
+/* ── Keyframes ─────────────────────────────────────────────── */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUpIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes shimmer {
+  0%   { transform: translateX(-180%) skewX(-16deg); }
+  100% { transform: translateX(280%)  skewX(-16deg); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes drift {
+  0%   { transform: translateX(0px); }
+  50%  { transform: translateX(25px); }
+  100% { transform: translateX(0px); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.4); }
+}
+
+@keyframes bubbleIn {
+  0%   { opacity: 0; transform: translateX(-50%) scale(0); }
+  70%  { opacity: 1; transform: translateX(-50%) scale(1.1); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+@keyframes bubbleOut {
+  from { opacity: 1; transform: translateX(-50%) translateY(0)    scale(1);   }
+  to   { opacity: 0; transform: translateX(-50%) translateY(-8px) scale(0.9); }
+}
+
+@keyframes holoSpin {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow:
+      0 12px 48px rgba(0, 0, 0, 0.12),
+      0 2px  8px  rgba(0, 0, 0, 0.06),
+      0 0 20px rgba(255, 100, 200, 0.30),
+      0 0 40px rgba(100, 200, 255, 0.15);
+  }
+  50% {
+    box-shadow:
+      0 12px 48px rgba(0, 0, 0, 0.12),
+      0 2px  8px  rgba(0, 0, 0, 0.06),
+      0 0 30px rgba(255, 100, 200, 0.50),
+      0 0 60px rgba(100, 200, 255, 0.25);
+  }
+}
+
+/* ── Page ───────────────────────────────────────────────────── */
+
+.page {
+  min-height: 100vh;
+  padding: 64px 0 0;
+  position: relative;
+  animation: fadeIn 0.4s ease forwards;
+  overflow-x: hidden;
+}
+
+/* ── Backgrounds ────────────────────────────────────────────── */
+
+.bgLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.bgDay,
+.bgNight {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.8s ease;
+}
+
+.bgDay   { background: linear-gradient(180deg, #FFE8C8 0%, #FFD4A8 20%, #F0EDE8 60%, #F7F4EF 100%); opacity: 1; }
+.bgNight { background: linear-gradient(180deg, #0F1B2D 0%, #1a1a2e 50%, #2d1b3d 100%); opacity: 0; }
+
+.night .bgDay   { opacity: 0; }
+.night .bgNight { opacity: 1; }
+
+.sun { display: none; }
+
+@media (min-width: 768px) {
+  .day .sun {
+    display: block;
+    position: absolute;
+    top: -20px; left: -20px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,200,80,0.3) 0%, transparent 70%);
+    pointer-events: none;
+  }
+}
+
+/* ── Clouds ─────────────────────────────────────────────────── */
+
+.cloud {
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(255, 252, 245, 0.9);
+  pointer-events: none;
+  animation-name: drift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  transition: opacity 0.8s ease;
+}
+.cloud::before, .cloud::after {
+  content: ''; position: absolute;
+  background: rgba(255, 252, 245, 0.9); border-radius: 50%;
+}
+.day .cloud    { opacity: 0.7; }
+.night .cloud  { opacity: 0.08; }
+.night .cloud3 { opacity: 0; }
+
+.cloud1 { width: 140px; height: 38px; top: 7%;  left: -20px;  animation-duration: 35s; }
+.cloud1::before { width: 60px; height: 60px; top: -24px; left: 20px; }
+.cloud1::after  { width: 44px; height: 44px; top: -18px; left: 68px; }
+.cloud2 { width: 110px; height: 30px; top: 20%; right: -10px; animation-duration: 50s; animation-delay: 8s; }
+.cloud2::before { width: 46px; height: 46px; top: -20px; left: 16px; }
+.cloud2::after  { width: 34px; height: 34px; top: -14px; left: 54px; }
+.cloud3 { width: 160px; height: 44px; top: 52%; left: 8%; animation-duration: 65s; animation-delay: 4s; }
+.cloud3::before { width: 70px; height: 70px; top: -28px; left: 24px; }
+.cloud3::after  { width: 52px; height: 52px; top: -20px; left: 82px; }
+
+/* ── Stars ──────────────────────────────────────────────────── */
+
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  animation: twinkle ease-in-out infinite;
+}
+
+/* ── Fixed UI buttons ───────────────────────────────────────── */
+
+.back {
+  position: fixed;
+  top: 20px; left: 20px;
+  z-index: 10;
+  height: 36px; padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px; font-weight: 300; letter-spacing: 0.04em;
+  color: #333; cursor: pointer;
+  transition: all 0.2s ease;
+}
+.back:hover { opacity: 0.75; transform: translateX(-2px); }
+.night .back { color: #F0EDE8; background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+
+.toggle {
+  position: fixed;
+  top: 20px; right: 20px;
+  z-index: 10;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #333;
+  transition: all 0.8s ease;
+}
+.night .toggle { color: #F0EDE8; background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); }
+
+/* ── Header ─────────────────────────────────────────────────── */
+
+.header {
+  position: relative; z-index: 1;
+  text-align: center;
+  margin-bottom: 12px;
+  animation: fadeUp 0.5s ease forwards;
+}
+
+.title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px; font-weight: 300; line-height: 1.1;
+  color: #1a1a1a; margin: 0 0 6px;
+  transition: color 0.8s ease;
+}
+.night .title { color: #F0EDE8; }
+
+.subtitle {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px; font-weight: 300; letter-spacing: 0.14em;
+  text-transform: uppercase; color: #aaa; margin: 0;
+  transition: color 0.8s ease;
+}
+.night .subtitle { color: #777; }
+
+/* ── Carousel ───────────────────────────────────────────────── */
+
+.carousel {
+  position: relative;
+  z-index: 1;
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+/* ── Track — single flex container that translates ──────────── */
+
+.track {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  /* transition set here; overridden to 'none' during silent resets */
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+/*
+  .noTransition disables transition on both the track AND all its cards
+  so that the silent infinite-loop reset is instant and invisible.
+*/
+.noTransition,
+.noTransition .trackCard {
+  transition: none !important;
+}
+
+/* ── Track card slot ─────────────────────────────────────────── */
+
+@keyframes dealCard {
+  0%   {
+    opacity: 0;
+    transform: translateX(var(--deal-x)) translateY(30px) rotate(var(--deal-rotate)) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) translateY(0) rotate(0deg) scale(var(--final-scale));
+  }
+}
+
+.trackCard {
+  width: 300px;
+  height: 420px;
+  flex-shrink: 0;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+  transform-origin: center center;
+}
+
+.dealing {
+  animation: dealCard 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) var(--deal-delay, 0ms) both;
+}
+
+/* ── Card ───────────────────────────────────────────────────── */
+
+.card {
+  position: relative;
+  width: 100%; height: 100%;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  overflow: visible;
+  transition: border 0.25s ease, background 0.8s ease;
+  will-change: transform;
+  padding: 0;
+}
+.night .card { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.12); }
+
+/* ── Centre card — holo ::before border + glow ───────────────── */
+
+/*
+  Mask technique: padding: 2px defines the ring. XOR mask makes only
+  the 2px ring (outside the card border) visible. z-index: -1 keeps it
+  behind content but the ring (at inset: -2px) still peeks outside.
+*/
+.cardCenter::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 22px;
+  padding: 2px;
+  background: linear-gradient(90deg, #ff0080, #ff8c00, #ffff00, #40e0d0, #7b2fff, #ff0080);
+  background-size: 400% 400%;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  z-index: -1;
+  animation: holoSpin 2.5s linear infinite;
+  pointer-events: none;
+}
+
+.cardCenter {
+  animation: glowPulse 2s ease-in-out infinite;
+  background: rgba(255, 255, 255, 0.50);
+}
+.night .cardCenter { background: rgba(255, 255, 255, 0.10); }
+
+/* ── Holo overlays ───────────────────────────────────────────── */
+
+.holoRainbow,
+.holoSpecular,
+.holoShine {
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  pointer-events: none; opacity: 0; z-index: 2;
+}
+.holoRainbow  { mix-blend-mode: color-dodge; }
+.holoSpecular { mix-blend-mode: overlay; }
+
+/* ── Card content — centre ───────────────────────────────────── */
+
+.cardContent {
+  position: relative; z-index: 3;
+  display: flex; flex-direction: column; align-items: center;
+  width: 100%; height: 100%;
+  padding: 24px;
+  gap: 6px;
+  box-sizing: border-box;
+}
+
+/* ── Card content — side cards ───────────────────────────────── */
+
+.cardContentSmall {
+  position: relative; z-index: 3;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+  padding: 16px 12px; gap: 10px;
+  box-sizing: border-box;
+}
+
+/* ── Pokédex number ─────────────────────────────────────────── */
+
+.pokedexNo {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px; font-weight: 300; color: #ccc;
+  align-self: flex-start;
+  position: relative; z-index: 3;
+  transition: color 0.8s ease;
+}
+.night .pokedexNo { color: #555; }
+
+/* ── Sprites ────────────────────────────────────────────────── */
+
+.sprite {
+  width: 160px; height: 160px;
+  object-fit: contain;
+  user-select: none; pointer-events: none;
+  position: relative; z-index: 3;
+  flex-shrink: 0;
+}
+
+.spriteSmall {
+  width: 100%; height: auto;
+  max-height: 140px;
+  object-fit: contain;
+  user-select: none; pointer-events: none;
+}
+
+/* ── Names ──────────────────────────────────────────────────── */
+
+.name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 30px; font-weight: 500; line-height: 1.1;
+  color: #1a1a1a; margin: 0;
+  position: relative; z-index: 3;
+  transition: color 0.8s ease;
+}
+.night .name { color: #F0EDE8; }
+
+.nameSmall {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px; font-weight: 400;
+  color: #1a1a1a; text-align: center;
+  transition: color 0.8s ease;
+}
+.night .nameSmall { color: #F0EDE8; }
+
+/* ── Divider ────────────────────────────────────────────────── */
+
+.divider {
+  width: 100%; height: 1px;
+  background: rgba(0, 0, 0, 0.08);
+  margin: 2px 0;
+  position: relative; z-index: 3; flex-shrink: 0;
+  transition: background 0.8s ease;
+}
+.night .divider { background: rgba(255, 255, 255, 0.1); }
+
+/* ── Type badges ────────────────────────────────────────────── */
+
+.typeBadges {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  justify-content: center;
+  position: relative; z-index: 3;
+}
+
+.typeBadge {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 4px 12px; border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* ── Stats ──────────────────────────────────────────────────── */
+
+.statLine {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 300; letter-spacing: 0.04em;
+  color: #888; margin: 0;
+  position: relative; z-index: 3;
+  transition: color 0.8s ease;
+}
+.night .statLine { color: #666; }
+
+.temperament {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14px; font-weight: 400; font-style: italic;
+  color: #555; margin: 0; text-align: center; line-height: 1.3;
+  position: relative; z-index: 3;
+  transition: color 0.8s ease;
+}
+.night .temperament { color: #999; }
+
+/* ── BD Bubble ──────────────────────────────────────────────── */
+
+.bubble {
+  position: absolute; top: 10px; left: 50%;
+  z-index: 10; pointer-events: none;
+  padding: 5px 10px;
+  background: white;
+  border: 1.5px solid rgba(0, 0, 0, 0.12);
+  border-radius: 18px 18px 18px 4px;
+  font-family: 'DM Sans', sans-serif; font-size: 13px; color: #1a1a1a;
+  white-space: nowrap;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  animation: bubbleIn 0.3s ease forwards;
+}
+.bubble::after {
+  content: ''; position: absolute;
+  bottom: -7px; left: 10px;
+  width: 10px; height: 10px; background: white;
+  border-right: 1.5px solid rgba(0, 0, 0, 0.12);
+  border-bottom: 1.5px solid rgba(0, 0, 0, 0.12);
+  transform: rotate(45deg); border-radius: 0 0 3px 0;
+}
+.bubbleOut { animation: bubbleOut 0.3s ease forwards; }
+
+/* ── Nav arrows — inside .carousel, position absolute ─────────── */
+
+.navArrow {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  z-index: 10;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #333; padding: 0;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.navLeft  { left:  24px; }
+.navRight { right: 24px; }
+
+.navLeft:hover  { background: rgba(255,255,255,0.15); transform: translateY(-50%) scale(1.08); }
+.navRight:hover { background: rgba(255,255,255,0.15); transform: translateY(-50%) scale(1.08); }
+
+.night .navArrow { color: #F0EDE8; }
+
+/* ── CTA — below carousel, flows with content ───────────────── */
+
+.ctaWrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+  padding-bottom: 40px;
+  z-index: 1;
+  animation: fadeUp 0.5s ease 0.3s both;
+}
+
+.cta {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 300; letter-spacing: 0.04em;
+  color: #111;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  height: 56px; padding: 0 28px;
+  white-space: nowrap; cursor: pointer;
+  position: relative; overflow: hidden;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.cta:hover { opacity: 0.85; transform: translateY(-2px) scale(1.01); }
+.cta::after {
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 40%; height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.55) 50%, transparent 100%);
+  animation: shimmer 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.pokeball {
+  flex-shrink: 0;
+  animation: spin 4s linear infinite;
+}

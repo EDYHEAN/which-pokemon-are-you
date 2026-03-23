@@ -70,8 +70,7 @@ function Pokeball() {
   )
 }
 
-export default function Landing() {
-  const [isNight, setIsNight] = useState(true)
+export default function Landing({ isNight, setIsNight, onChoose }) {
   const [hoverPokemon, setHoverPokemon] = useState(null)
   const [isExiting, setIsExiting] = useState(false)
 
@@ -188,6 +187,7 @@ export default function Landing() {
         className={`${s.cta} ${s.section}`}
         onMouseEnter={handleCtaEnter}
         onMouseLeave={handleCtaLeave}
+        onClick={onChoose}
       >
         <span className={`${s.ctaDefault} ${hoverPokemon && !isExiting ? s.ctaDefaultOut : ''} ${isExiting ? s.ctaDefaultIn : ''}`}>
           <Pokeball />

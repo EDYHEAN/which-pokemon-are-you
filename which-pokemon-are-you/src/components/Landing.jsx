@@ -72,8 +72,19 @@ export default function Landing({ isNight, onChoose }) {
         Your pocket companion
       </div>
 
-      {/* 2 — Hero */}
-      <div className={`${s.heroWrapper} ${s.section}`}>
+      {/* 2 — Title */}
+      <h1 className={`${s.title} ${s.section}`}>
+        Raise your<br />
+        <span className={s.titleItalic}>Pokémon.</span>
+      </h1>
+
+      {/* 3 — Subtitle */}
+      <p className={`${s.subtitle} ${s.section}`}>
+        Choose your companion. Feed it, play with it, watch it grow. A living Pokédex — just for you.
+      </p>
+
+      {/* 4 — Egg + CTA group */}
+      <div className={`${s.eggCtaGroup} ${s.section}`}>
         <div className={s.eggRing}>
           <img
             src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/egg.png"
@@ -82,23 +93,39 @@ export default function Landing({ isNight, onChoose }) {
             draggable={false}
           />
         </div>
+
+        <button
+          className={s.cta}
+          onMouseEnter={handleCtaEnter}
+          onMouseLeave={handleCtaLeave}
+          onClick={onChoose}
+        >
+          <span className={`${s.ctaDefault} ${hoverPokemon && !isExiting ? s.ctaDefaultOut : ''} ${isExiting ? s.ctaDefaultIn : ''}`}>
+            <Pokeball />
+            What's inside ?
+          </span>
+          <span className={`${s.ctaHoverContent} ${hoverPokemon && !isExiting ? s.ctaHoverIn : ''} ${isExiting ? s.ctaHoverOut : ''}`}>
+            {hoverPokemon && (
+              <img
+                src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${hoverPokemon.id}.png`}
+                alt={hoverPokemon.name}
+                className={s.ctaSprite}
+              />
+            )}
+            {hoverPokemon?.phrase}
+          </span>
+        </button>
       </div>
 
-      {/* 3 — Title */}
-      <h1 className={`${s.title} ${s.section}`}>
-        Raise your<br />
-        <span className={s.titleItalic}>Pokémon.</span>
-      </h1>
-
-      {/* 4 — Subtitle */}
-      <p className={`${s.subtitle} ${s.section}`}>
-        Choose your companion. Feed it, play with it, watch it grow. A living Pokédex — just for you.
+      {/* 5 — Fine print */}
+      <p className={`${s.finePrint} ${s.section}`}>
+        Free · No account needed
       </p>
 
-      {/* 5 — Divider */}
+      {/* 6 — Divider */}
       <div className={`${s.divider} ${s.section}`} />
 
-      {/* 6 — Features */}
+      {/* 7 — Features */}
       <div className={`${s.features} ${s.section}`}>
         {[
           { word: 'Feed', sub: '& care'   },
@@ -111,34 +138,6 @@ export default function Landing({ isNight, onChoose }) {
           </div>
         ))}
       </div>
-
-      {/* 7 — CTA */}
-      <button
-        className={`${s.cta} ${s.section}`}
-        onMouseEnter={handleCtaEnter}
-        onMouseLeave={handleCtaLeave}
-        onClick={onChoose}
-      >
-        <span className={`${s.ctaDefault} ${hoverPokemon && !isExiting ? s.ctaDefaultOut : ''} ${isExiting ? s.ctaDefaultIn : ''}`}>
-          <Pokeball />
-          Choose your Pokémon
-        </span>
-        <span className={`${s.ctaHoverContent} ${hoverPokemon && !isExiting ? s.ctaHoverIn : ''} ${isExiting ? s.ctaHoverOut : ''}`}>
-          {hoverPokemon && (
-            <img
-              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${hoverPokemon.id}.png`}
-              alt={hoverPokemon.name}
-              className={s.ctaSprite}
-            />
-          )}
-          {hoverPokemon?.phrase}
-        </span>
-      </button>
-
-      {/* 8 — Fine print */}
-      <p className={`${s.finePrint} ${s.section}`}>
-        Free · No account needed
-      </p>
 
     </main>
   )

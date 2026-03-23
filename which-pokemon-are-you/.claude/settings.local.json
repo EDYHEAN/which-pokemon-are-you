@@ -6,7 +6,13 @@
       "Bash(curl:*)",
       "Bash(lsof -ti:5174)",
       "Bash(mv PokemonSelector.jsx EggSelector.jsx)",
-      "Bash(mv PokemonSelector.module.css EggSelector.module.css)"
+      "Bash(mv PokemonSelector.module.css EggSelector.module.css)",
+      "Bash(node:*)",
+      "Bash(identify /c/Users/johan.trigeard/Documents/Perso/which-pokemon-are-you/src/assets/hand.png)",
+      "Bash(node -e \"require\\(''''sharp''''\\)\")",
+      "Bash(node -e \"require\\(''''jimp''''\\)\")",
+      "Bash(npm list:*)",
+      "Bash(powershell -Command \":*)"
     ]
   }
 }

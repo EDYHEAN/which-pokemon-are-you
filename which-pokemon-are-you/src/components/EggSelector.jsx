@@ -1,61 +1,225 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import s from './EggSelector.module.css'
 
-const pokemon = [
-  { id: 1,   name: 'Bulbizarre',  no: '001', type: 'Plante / Poison', size: '0.7m',  weight: '6.9kg',   temperament: 'Doux et réservé' },
-  { id: 4,   name: 'Salamèche',   no: '004', type: 'Feu',             size: '0.6m',  weight: '8.5kg',   temperament: 'Courageux et fier' },
-  { id: 7,   name: 'Carapuce',    no: '007', type: 'Eau',             size: '0.5m',  weight: '9.0kg',   temperament: 'Calme et protecteur' },
-  { id: 25,  name: 'Pikachu',     no: '025', type: 'Électrik',        size: '0.4m',  weight: '6.0kg',   temperament: 'Vif et espiègle' },
-  { id: 35,  name: 'Mélofée',     no: '035', type: 'Fée',             size: '0.6m',  weight: '7.5kg',   temperament: 'Curieux et câlin' },
-  { id: 39,  name: 'Rondoudou',   no: '039', type: 'Normal / Fée',    size: '0.5m',  weight: '5.5kg',   temperament: 'Sensible et expressif' },
-  { id: 52,  name: 'Miaouss',     no: '052', type: 'Normal',          size: '0.4m',  weight: '4.2kg',   temperament: 'Rusé et indépendant' },
-  { id: 54,  name: 'Psykokwak',   no: '054', type: 'Eau',             size: '0.8m',  weight: '19.6kg',  temperament: 'Perplexe et attachant' },
-  { id: 58,  name: 'Caninos',     no: '058', type: 'Feu',             size: '0.7m',  weight: '19.0kg',  temperament: 'Loyal et impulsif' },
-  { id: 63,  name: 'Abra',        no: '063', type: 'Psy',             size: '0.9m',  weight: '19.5kg',  temperament: 'Introverti et mystérieux' },
-  { id: 77,  name: 'Ponyta',      no: '077', type: 'Feu',             size: '1.0m',  weight: '30.0kg',  temperament: 'Libre et fougueux' },
-  { id: 79,  name: 'Ramoloss',    no: '079', type: 'Eau / Psy',       size: '1.2m',  weight: '36.0kg',  temperament: 'Contemplatif et serein' },
-  { id: 92,  name: 'Fantominus',  no: '092', type: 'Spectre / Poison',size: '1.3m',  weight: '0.1kg',   temperament: 'Espiègle et insaisissable' },
-  { id: 102, name: 'Noeunoeuf',   no: '102', type: 'Plante / Psy',    size: '0.4m',  weight: '5.0kg',   temperament: 'Zen et collectif' },
-  { id: 113, name: 'Leveinard',   no: '113', type: 'Normal',          size: '1.1m',  weight: '55.5kg',  temperament: 'Généreux et maternel' },
-  { id: 115, name: 'Kangourex',   no: '115', type: 'Normal',          size: '2.2m',  weight: '80.0kg',  temperament: 'Protecteur et déterminé' },
-  { id: 116, name: 'Hypotrempe',  no: '116', type: 'Eau',             size: '0.4m',  weight: '8.0kg',   temperament: 'Gracieux et timide' },
-  { id: 129, name: 'Magicarpe',   no: '129', type: 'Eau',             size: '0.9m',  weight: '10.0kg',  temperament: 'Persévérant malgré tout' },
-  { id: 131, name: 'Lokhlass',    no: '131', type: 'Eau / Glace',     size: '2.5m',  weight: '220.0kg', temperament: 'Majestueux et mystérieux' },
-  { id: 132, name: 'Métamorph',   no: '132', type: 'Normal',          size: '0.3m',  weight: '4.0kg',   temperament: 'Adaptable et imprévisible' },
-  { id: 133, name: 'Évoli',       no: '133', type: 'Normal',          size: '0.3m',  weight: '6.5kg',   temperament: 'Curieux et indécis' },
-  { id: 137, name: 'Porygon',     no: '137', type: 'Normal',          size: '0.8m',  weight: '36.5kg',  temperament: 'Logique et précis' },
-  { id: 143, name: 'Ronflex',     no: '143', type: 'Normal',          size: '2.1m',  weight: '460.0kg', temperament: 'Paisible et gourmand' },
-  { id: 147, name: 'Minidraco',   no: '147', type: 'Dragon',          size: '1.8m',  weight: '3.3kg',   temperament: 'Noble et ambitieux' },
+// ── Egg data ──────────────────────────────────────────────────
+const eggs = [
+  {
+    id: 'flame', name: 'Œuf Flamme', hint: 'Feu & passion',
+    color1: '#FF4500', color2: '#FF8C00', pattern: 'flames',
+    pool: [{ id: 4, name: 'Salamèche' }, { id: 58, name: 'Caninos' }, { id: 77, name: 'Ponyta' }],
+  },
+  {
+    id: 'ocean', name: 'Œuf Océan', hint: 'Eau & sérénité',
+    color1: '#1E90FF', color2: '#00CED1', pattern: 'waves',
+    pool: [{ id: 7, name: 'Carapuce' }, { id: 54, name: 'Psykokwak' }, { id: 116, name: 'Hypotrempe' }],
+  },
+  {
+    id: 'forest', name: 'Œuf Forêt', hint: 'Nature & sagesse',
+    color1: '#228B22', color2: '#90EE90', pattern: 'dots',
+    pool: [{ id: 1, name: 'Bulbizarre' }, { id: 102, name: 'Noeunoeuf' }],
+  },
+  {
+    id: 'thunder', name: 'Œuf Foudre', hint: 'Énergie & vitesse',
+    color1: '#FFD700', color2: '#FFF44F', pattern: 'zigzag',
+    pool: [{ id: 25, name: 'Pikachu' }, { id: 81, name: 'Magnéti' }],
+  },
+  {
+    id: 'moon', name: 'Œuf Lune', hint: 'Douceur & mystère',
+    color1: '#FFB7C5', color2: '#E6E6FA', pattern: 'stars',
+    pool: [{ id: 35, name: 'Mélofée' }, { id: 39, name: 'Rondoudou' }],
+  },
+  {
+    id: 'shadow', name: 'Œuf Ombre', hint: 'Obscurité & secret',
+    color1: '#2D1B69', color2: '#6A0DAD', pattern: 'mist',
+    pool: [{ id: 92, name: 'Fantominus' }, { id: 104, name: 'Osselait' }, { id: 23, name: 'Abo' }],
+  },
+  {
+    id: 'crystal', name: 'Œuf Cristal', hint: 'Intelligence & logique',
+    color1: '#00BFFF', color2: '#E0F7FF', pattern: 'geometric',
+    pool: [{ id: 63, name: 'Abra' }, { id: 137, name: 'Porygon' }],
+  },
+  {
+    id: 'wild', name: 'Œuf Sauvage', hint: 'Instinct & liberté',
+    color1: '#8B4513', color2: '#D2B48C', pattern: 'spots',
+    pool: [
+      { id: 52, name: 'Miaouss' }, { id: 133, name: 'Évoli' },
+      { id: 132, name: 'Métamorph' }, { id: 79, name: 'Ramoloss' }, { id: 143, name: 'Ronflex' },
+    ],
+  },
+  {
+    id: 'mystic', name: 'Œuf Mystic', hint: 'Puissance & noblesse',
+    color1: '#FFD700', color2: '#B8860B', pattern: 'scales',
+    pool: [{ id: 147, name: 'Minidraco' }, { id: 131, name: 'Lokhlass' }, { id: 115, name: 'Kangourex' }],
+  },
+  {
+    id: 'mystery', name: 'Œuf Mystère', hint: '??? · Surprise totale',
+    color1: '#888888', color2: '#CCCCCC', pattern: 'question',
+    pool: [],
+  },
 ]
-
-const TYPE_COLORS = {
-  Plante:   '#4CAF50', Poison:  '#A040A0', Feu:     '#FF6B35',
-  Eau:      '#4A9EFF', Électrik:'#FFD700', Psy:     '#FF69B4',
-  Normal:   '#A8A8A8', Fée:     '#FFB7C5', Dragon:  '#7038F8',
-  Spectre:  '#705898', Glace:   '#98D8D8',
-}
-
-const bubbleTexts = ['！', '♡', 'やった！', '✨', 'Ouiii !', 'Choisis-moi !']
 
 // ── Carousel constants ────────────────────────────────────────
-// 3 clones on each side ensures dist-2 neighbours always exist
-const CLONE   = 3
-const CARD_W  = 300
-const GAP     = 16
-const STEP    = CARD_W + GAP  // 316px per slot
+const CLONE = 3
+const CARD_W = 300
+const GAP    = 16
+const STEP   = CARD_W + GAP
 
-// Extended array: [last-3, last-2, last-1, 0..23, 0, 1, 2]  (30 items)
-const EXT = [
-  ...pokemon.slice(-CLONE),
-  ...pokemon,
-  ...pokemon.slice(0, CLONE),
-]
+const EXT = [...eggs.slice(-CLONE), ...eggs, ...eggs.slice(0, CLONE)]
 
-// Scale / opacity per distance from centre
 const SCALE_BY_DIST   = [1, 0.7,  0.533, 0]
 const OPACITY_BY_DIST = [1, 0.75, 0.35,  0]
 
-// ── Card3D (zone-based tilt, centre only) ─────────────────────
+// ── Helpers ───────────────────────────────────────────────────
+function hexToRgba(hex, alpha) {
+  const n = parseInt(hex.replace('#', ''), 16)
+  return `rgba(${(n >> 16) & 0xff},${(n >> 8) & 0xff},${n & 0xff},${alpha})`
+}
+
+function darkenHex(hex, amount = 40) {
+  const n = parseInt(hex.replace('#', ''), 16)
+  const r = Math.max(0, ((n >> 16) & 0xff) - amount)
+  const g = Math.max(0, ((n >>  8) & 0xff) - amount)
+  const b = Math.max(0, ( n        & 0xff) - amount)
+  return `rgb(${r},${g},${b})`
+}
+
+// ── SVG Patterns ──────────────────────────────────────────────
+function EggPattern({ pattern }) {
+  const cls = s.eggPattern
+  switch (pattern) {
+    case 'flames':
+      return (
+        <svg className={cls} viewBox="0 0 120 150" fill="white" opacity="0.35">
+          <path d="M22 135 Q12 112 22 88 Q30 108 42 94 Q36 120 50 128 Q62 110 54 78 Q72 100 64 135 Z"/>
+          <path d="M78 128 Q70 110 78 92 Q85 106 94 96 Q88 118 99 123 Z" opacity="0.7"/>
+        </svg>
+      )
+    case 'waves':
+      return (
+        <svg className={cls} viewBox="0 0 120 150" fill="none" stroke="white" strokeWidth="2.5" opacity="0.35">
+          <path d="M5 40 Q20 28 35 40 Q50 52 65 40 Q80 28 95 40 Q110 52 125 40"/>
+          <path d="M5 68 Q20 56 35 68 Q50 80 65 68 Q80 56 95 68 Q110 80 125 68"/>
+          <path d="M5 96 Q20 84 35 96 Q50 108 65 96 Q80 84 95 96 Q110 108 125 96"/>
+          <path d="M5 124 Q20 112 35 124 Q50 136 65 124 Q80 112 95 124 Q110 136 125 124"/>
+        </svg>
+      )
+    case 'dots':
+      return (
+        <svg className={cls} viewBox="0 0 120 150" fill="white" opacity="0.4">
+          <circle cx="28" cy="35" r="5.5"/><circle cx="72" cy="28" r="4"/>
+          <circle cx="98" cy="58" r="5"/><circle cx="18" cy="75" r="4"/>
+          <circle cx="55" cy="72" r="6.5"/><circle cx="92" cy="90" r="4.5"/>
+          <circle cx="32" cy="108" r="5"/><circle cx="78" cy="115" r="4"/>
+          <circle cx="55" cy="50" r="3.5"/><circle cx="88" cy="42" r="3"/>
+          <circle cx="14" cy="52" r="3.5"/><circle cx="65" cy="130" r="3"/>
+        </svg>
+      )
+    case 'zigzag':
+      return (
+        <svg className={cls} viewBox="0 0 120 150" fill="none" stroke="white" strokeWidth="2.5" opacity="0.35" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="5,45 22,28 39,45 56,28 73,45 90,28 107,45"/>
+          <polyline points="5,75 22,58 39,75 56,58 73,75 90,58 107,75"/>
+          <polyline points="5,105 22,88 39,105 56,88 73,105 90,88 107,105"/>
+          <polyline points="5,132 22,115 39,132 56,115 73,132 90,115 107,132"/>
+        </svg>
+      )
+    case 'stars':
+      return (
+        <svg className={cls} viewBox="0 0 120 150" fill="white" opacity="0.4">
+          {[
+            [24, 32, 9], [78, 42, 7], [48, 72, 11],
+            [18, 108, 7], [88, 95, 9], [60, 128, 6],
+            [96, 58, 5], [38, 52, 5],
+          ].map(([cx, cy, r], i) => (
+            <path key={i} d={
+              `M${cx},${cy-r} L${cx+r*.3},${cy-r*.3} L${cx+r},${cy} ` +
+              `L${cx+r*.3},${cy+r*.3} L${cx},${cy+r} ` +
+              `L${cx-r*.3},${cy+r*.3} L${cx-r},${cy} L${cx-r*.3},${cy-r*.3} Z`
+            }/>
+          ))}
+        </svg>
+      )
+    case 'mist':
+      return (
+        <svg className={cls} viewBox="0 0 120 150" fill="white" opacity="0.45">
+          <ellipse cx="32" cy="55" rx="28" ry="13" opacity="0.7"/>
+          <ellipse cx="88" cy="78" rx="22" ry="11" opacity="0.5"/>
+          <ellipse cx="50" cy="108" rx="30" ry="13" opacity="0.6"/>
+          <ellipse cx="72" cy="36" rx="20" ry="9"  opacity="0.4"/>
+          <ellipse cx="22" cy="92" rx="20" ry="9"  opacity="0.35"/>
+          <ellipse cx="95" cy="118" rx="18" ry="8" opacity="0.4"/>
+        </svg>
+      )
+    case 'geometric':
+      return (
+        <svg className={cls} viewBox="0 0 120 150" fill="none" stroke="white" strokeWidth="1.5" opacity="0.4">
+          <polygon points="60,14 82,50 38,50"/>
+          <polygon points="16,64 38,100 -6,100"/>
+          <polygon points="82,58 104,94 60,94"/>
+          <polygon points="38,110 60,146 16,146"/>
+          <polygon points="86,110 108,146 64,146"/>
+        </svg>
+      )
+    case 'spots':
+      return (
+        <svg className={cls} viewBox="0 0 120 150" fill="white" opacity="0.38">
+          <ellipse cx="26" cy="42" rx="13" ry="11"/>
+          <ellipse cx="78" cy="35" rx="10" ry="12"/>
+          <ellipse cx="94" cy="72" rx="12" ry="10"/>
+          <ellipse cx="18" cy="92" rx="10" ry="11"/>
+          <ellipse cx="58" cy="98" rx="15" ry="12"/>
+          <ellipse cx="90" cy="118" rx="11" ry="10"/>
+          <ellipse cx="38" cy="128" rx="9" ry="10"/>
+          <ellipse cx="65" cy="58" rx="8"  ry="9"/>
+        </svg>
+      )
+    case 'scales': {
+      const arcPath = (x, y) => `M${x},${y} Q${x+12.5},${y-14} ${x+25},${y}`
+      const evenXs = [-8, 17, 42, 67, 92, 117]
+      const oddXs  = [5, 30, 55, 80, 105]
+      return (
+        <svg className={cls} viewBox="0 0 120 150" fill="none" stroke="white" strokeWidth="1.5" opacity="0.4">
+          {[28, 56, 84, 112, 140].map((y, ri) =>
+            (ri % 2 === 0 ? evenXs : oddXs).map((x, j) => (
+              <path key={`${ri}-${j}`} d={arcPath(x, y)}/>
+            ))
+          )}
+        </svg>
+      )
+    }
+    case 'question':
+      return (
+        <svg className={cls} viewBox="0 0 120 150" opacity="0.55">
+          <text x="50%" y="54%" dominantBaseline="middle" textAnchor="middle"
+            fill="white" fontSize="80" fontFamily="Cormorant Garamond, serif"
+            fontWeight="300">?</text>
+        </svg>
+      )
+    default:
+      return null
+  }
+}
+
+// ── Egg shape (pure CSS + SVG pattern) ───────────────────────
+function EggShape({ egg, size = 120, animated = false }) {
+  const h = Math.round(size * 1.25)
+  return (
+    <div
+      className={`${s.eggShape} ${animated ? s.eggWobble : ''}`}
+      style={{
+        width:        size,
+        height:       h,
+        background:   `linear-gradient(145deg, ${egg.color2} 0%, ${egg.color1} 60%, ${darkenHex(egg.color1)} 100%)`,
+        boxShadow:    `0 8px 32px ${hexToRgba(egg.color1, 0.4)}, inset 0 1px 0 rgba(255,255,255,0.4)`,
+        border:       '1px solid rgba(255,255,255,0.3)',
+      }}
+    >
+      <EggPattern pattern={egg.pattern}/>
+    </div>
+  )
+}
+
+// ── Card3D (zone-based tilt) ──────────────────────────────────
 const ZONES = [
   { rotX:  1, rotY: -1 }, { rotX:  1, rotY:  0 }, { rotX:  1, rotY:  1 },
   { rotX:  0, rotY: -1 },                           { rotX:  0, rotY:  1 },
@@ -63,7 +227,7 @@ const ZONES = [
 ]
 
 function zoneStyle(i) {
-  const top  = i < 3, bot = i > 4
+  const top = i < 3, bot = i > 4
   return {
     position: 'absolute',
     width:  (!top && !bot) ? '50%' : '33.33%',
@@ -76,7 +240,6 @@ function zoneStyle(i) {
 
 function Card3D({ children, onHoloMove, onHoloLeave }) {
   const innerRef = useRef(null)
-
   const enter = (rotX, rotY) => {
     if (!innerRef.current) return
     innerRef.current.style.transform  = `perspective(600px) rotateX(${rotX * 12}deg) rotateY(${rotY * 12}deg) scale(1.04)`
@@ -94,7 +257,6 @@ function Card3D({ children, onHoloMove, onHoloLeave }) {
     const r = e.currentTarget.getBoundingClientRect()
     onHoloMove((e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height)
   }
-
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', transformStyle: 'preserve-3d' }}
          onMouseLeave={leave} onMouseMove={move}>
@@ -102,13 +264,13 @@ function Card3D({ children, onHoloMove, onHoloLeave }) {
         {children}
       </div>
       {ZONES.map((z, i) => (
-        <div key={i} onMouseEnter={() => enter(z.rotX, z.rotY)} style={zoneStyle(i)} />
+        <div key={i} onMouseEnter={() => enter(z.rotX, z.rotY)} style={zoneStyle(i)}/>
       ))}
     </div>
   )
 }
 
-// ── Icons ─────────────────────────────────────────────────────
+// ── Pokeball icon ─────────────────────────────────────────────
 function Pokeball() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" className={s.pokeball}>
@@ -122,71 +284,58 @@ function Pokeball() {
 
 // ── Main component ────────────────────────────────────────────
 export default function EggSelector({ isNight, onBack }) {
-  // extIndex: position in EXT array. Starts at CLONE (= pokemon[0]).
   const [extIndex, setExtIndexState] = useState(CLONE)
   const extIndexRef = useRef(CLONE)
 
-  const [bubble, setBubble]               = useState(null)
+  const [bubble, setBubble]           = useState(null)
   const [bubbleExiting, setBubbleExiting] = useState(false)
-  const [isDealing, setIsDealing]         = useState(true)
+  const [isDealing, setIsDealing]     = useState(true)
 
   const trackRef    = useRef(null)
   const isMoving    = useRef(false)
   const bubbleTimer = useRef(null)
   const touchStartX = useRef(null)
 
-  // Stable random rotations per EXT position for deal animation
-  const dealRotations = useRef(
-    EXT.map(() => (Math.random() - 0.5) * 16)
-  ).current
+  const dealRotations = useRef(EXT.map(() => (Math.random() - 0.5) * 16)).current
 
-  // Holo overlay refs — conditionally attached to current centre card
   const rainbowRef  = useRef(null)
   const specularRef = useRef(null)
   const shineRef    = useRef(null)
 
-  // Keep ref in sync with state
   const setExtIndex = useCallback((val) => {
     const next = typeof val === 'function' ? val(extIndexRef.current) : val
     extIndexRef.current = next
     setExtIndexState(next)
   }, [])
 
-  // Derived active pokemon (0-based index in original array)
-  const activeIndex  = ((extIndex - CLONE) % pokemon.length + pokemon.length) % pokemon.length
-  const activePokemon = pokemon[activeIndex]
+  const activeIndex = ((extIndex - CLONE) % eggs.length + eggs.length) % eggs.length
+  const activeEgg   = eggs[activeIndex]
 
-  // track translateX: left: 50% on the track, so translateX centres card at extIndex
   const trackTranslateX = -(extIndex * STEP + CARD_W / 2)
 
-  // ── Navigation ────────────────────────────────────────────
-  const navigate = useCallback((targetExtIndex) => {
+  // ── Navigation ───────────────────────────────────────────
+  const navigate = useCallback((target) => {
     if (isMoving.current) return
     isMoving.current = true
     setBubble(null)
-    setExtIndex(targetExtIndex)
+    setExtIndex(target)
   }, [setExtIndex])
 
   const prev = useCallback(() => navigate(extIndexRef.current - 1), [navigate])
   const next = useCallback(() => navigate(extIndexRef.current + 1), [navigate])
 
-  // ── Infinite-loop reset after transition ──────────────────
+  // ── Infinite-loop reset ──────────────────────────────────
   const handleTransitionEnd = useCallback((e) => {
-    // Only care about the track's own transform transition
     if (e.target !== trackRef.current || e.propertyName !== 'transform') return
-
     const cur = extIndexRef.current
     let newIdx = null
-    if (cur < CLONE)                    newIdx = cur + pokemon.length
-    else if (cur >= CLONE + pokemon.length) newIdx = cur - pokemon.length
-
+    if (cur < CLONE)                   newIdx = cur + eggs.length
+    else if (cur >= CLONE + eggs.length) newIdx = cur - eggs.length
     if (newIdx !== null) {
-      // Disable ALL transitions, jump to the matching real position (visually identical)
       const t = trackRef.current
       t.classList.add(s.noTransition)
       t.style.transition = 'none'
       setExtIndex(newIdx)
-      // Re-enable on next paint cycle
       requestAnimationFrame(() => requestAnimationFrame(() => {
         t.classList.remove(s.noTransition)
         t.style.transition = ''
@@ -197,19 +346,16 @@ export default function EggSelector({ isNight, onBack }) {
     }
   }, [setExtIndex])
 
-  // ── Touch swipe ───────────────────────────────────────────
-  const handleTouchStart = useCallback((e) => {
-    touchStartX.current = e.touches[0].clientX
-  }, [])
-  const handleTouchEnd = useCallback((e) => {
+  // ── Touch swipe ──────────────────────────────────────────
+  const handleTouchStart = useCallback((e) => { touchStartX.current = e.touches[0].clientX }, [])
+  const handleTouchEnd   = useCallback((e) => {
     if (touchStartX.current === null) return
     const dx = e.changedTouches[0].clientX - touchStartX.current
-    if (dx > 50)       prev()
-    else if (dx < -50) next()
+    if (dx > 50) prev(); else if (dx < -50) next()
     touchStartX.current = null
   }, [prev, next])
 
-  // ── Holo effects (ref-based, no state) ───────────────────
+  // ── Holo effects ─────────────────────────────────────────
   const holoMove = useCallback((x, y) => {
     const op = String(0.4 + x * 0.3)
     if (rainbowRef.current) {
@@ -235,10 +381,12 @@ export default function EggSelector({ isNight, onBack }) {
     })
   }, [])
 
-  // ── Bubble ────────────────────────────────────────────────
+  // ── Bubble ───────────────────────────────────────────────
+  const bubbleTexts = ['！', '♡', '✨', 'Choisis-moi !', 'C\'est moi !', 'やった！']
+
   const handleCenterEnter = useCallback(() => {
-    const text = bubbleTexts[Math.floor(Math.random() * bubbleTexts.length)]
-    setBubble({ text }); setBubbleExiting(false)
+    setBubble({ text: bubbleTexts[Math.floor(Math.random() * bubbleTexts.length)] })
+    setBubbleExiting(false)
     clearTimeout(bubbleTimer.current)
     bubbleTimer.current = setTimeout(() => {
       setBubbleExiting(true)
@@ -252,113 +400,47 @@ export default function EggSelector({ isNight, onBack }) {
     setTimeout(() => { setBubble(null); setBubbleExiting(false) }, 300)
   }, [])
 
-  // ── Deal animation (lock nav, unlock after cards settle) ──
+  // ── Deal animation ───────────────────────────────────────
   useEffect(() => {
     isMoving.current = true
-    const timer = setTimeout(() => {
-      setIsDealing(false)
-      isMoving.current = false
-    }, 970)
-    return () => clearTimeout(timer)
+    const t = setTimeout(() => { setIsDealing(false); isMoving.current = false }, 970)
+    return () => clearTimeout(t)
   }, [])
 
-  // ── Render ────────────────────────────────────────────────
+  // ── Render ───────────────────────────────────────────────
   return (
     <main className={`${s.page} ${isNight ? s.night : s.day}`}>
 
       <button className={s.back} onClick={onBack}>← Back</button>
 
       <header className={s.header}>
-        <h1 className={s.title}>Choose your companion</h1>
-        <p className={s.subtitle}>Gen I · {pokemon.length} Pokémon</p>
+        <h1 className={s.title}>Choose your egg</h1>
+        <p className={s.subtitle}>Your Pokémon is a mystery · Gen I</p>
       </header>
 
       {/* Carousel */}
-      <div
-        className={s.carousel}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        {/* Left arrow */}
+      <div className={s.carousel} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+
         <button className={`${s.navArrow} ${s.navLeft}`} onClick={prev} aria-label="Précédent">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M13 4L7 10L13 16"/>
           </svg>
         </button>
 
-        {/* Scrolling track */}
         <div
           ref={trackRef}
           className={s.track}
           style={{ transform: `translateX(${trackTranslateX}px) translateY(-50%)` }}
           onTransitionEnd={handleTransitionEnd}
         >
-          {EXT.map((p, i) => {
-            const dist     = Math.abs(i - extIndex)
-            const isCenter = dist === 0
+          {EXT.map((egg, i) => {
+            const dist      = Math.abs(i - extIndex)
+            const isCenter  = dist === 0
             const isVisible = dist <= 2
-            const scale    = SCALE_BY_DIST[Math.min(dist, 3)]
-            const opacity  = OPACITY_BY_DIST[Math.min(dist, 3)]
-            const zIdx     = isCenter ? 3 : dist === 1 ? 2 : 1
-
-            const cardButton = (
-              <button
-                className={[s.card, isCenter ? s.cardCenter : ''].join(' ')}
-                style={{ width: '100%', height: '100%' }}
-                onClick={!isCenter && isVisible ? () => navigate(i) : undefined}
-                onMouseEnter={isCenter ? handleCenterEnter : undefined}
-                onMouseLeave={isCenter ? handleCenterLeave : undefined}
-                tabIndex={isCenter ? 0 : -1}
-              >
-                {/* Holo overlays — only on centre card */}
-                {isCenter && <>
-                  <div ref={rainbowRef}  className={s.holoRainbow}/>
-                  <div ref={specularRef} className={s.holoSpecular}/>
-                  <div ref={shineRef}    className={s.holoShine}/>
-                </>}
-
-                {/* BD bubble */}
-                {isCenter && bubble && (
-                  <div className={`${s.bubble} ${bubbleExiting ? s.bubbleOut : ''}`} aria-hidden="true">
-                    {bubble.text}
-                  </div>
-                )}
-
-                {/* Card content */}
-                {isCenter ? (
-                  <div className={s.cardContent}>
-                    <span className={s.pokedexNo}>#{p.no}</span>
-                    <img
-                      src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`}
-                      alt={p.name} className={s.sprite} draggable={false}
-                    />
-                    <span className={s.name}>{p.name}</span>
-                    <div className={s.divider}/>
-                    <div className={s.typeBadges}>
-                      {p.type.split(' / ').map(t => {
-                        const c = TYPE_COLORS[t] ?? '#A8A8A8'
-                        return (
-                          <span key={t} className={s.typeBadge}
-                            style={{ background: c + '22', color: c, border: `1px solid ${c}55` }}>
-                            {t}
-                          </span>
-                        )
-                      })}
-                    </div>
-                    <p className={s.statLine}>{p.size} · {p.weight}</p>
-                    <p className={s.temperament}>{p.temperament}</p>
-                  </div>
-                ) : (
-                  <div className={s.cardContentSmall}>
-                    <img
-                      src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`}
-                      alt={p.name} className={s.spriteSmall} draggable={false}
-                    />
-                    <span className={s.nameSmall}>{p.name}</span>
-                  </div>
-                )}
-              </button>
-            )
+            const scale     = SCALE_BY_DIST[Math.min(dist, 3)]
+            const opacity   = OPACITY_BY_DIST[Math.min(dist, 3)]
+            const zIdx      = isCenter ? 3 : dist === 1 ? 2 : 1
 
             const isDealingCard = isDealing && dist <= 2
             const dealStyle = isDealingCard ? {
@@ -368,41 +450,93 @@ export default function EggSelector({ isNight, onBack }) {
               '--deal-delay':  `${dist * 80}ms`,
             } : {}
 
+            const cardButton = (
+              <button
+                className={`${s.card} ${isCenter ? s.cardCenter : ''}`}
+                style={{ width: '100%', height: '100%' }}
+                onClick={!isCenter && isVisible ? () => navigate(i) : undefined}
+                onMouseEnter={isCenter ? handleCenterEnter : undefined}
+                onMouseLeave={isCenter ? handleCenterLeave : undefined}
+                tabIndex={isCenter ? 0 : -1}
+              >
+                {isCenter && <>
+                  <div ref={rainbowRef}  className={s.holoRainbow}/>
+                  <div ref={specularRef} className={s.holoSpecular}/>
+                  <div ref={shineRef}    className={s.holoShine}/>
+                </>}
+
+                {isCenter && bubble && (
+                  <div className={`${s.bubble} ${bubbleExiting ? s.bubbleOut : ''}`} aria-hidden="true">
+                    {bubble.text}
+                  </div>
+                )}
+
+                {isCenter ? (
+                  <div className={s.cardContent}>
+                    <EggShape egg={egg} size={120} animated/>
+                    <span className={s.eggName}>{egg.name}</span>
+                    <span className={s.eggHint}>{egg.hint}</span>
+                    <span className={s.poolCount}>
+                      {egg.pool.length === 0 ? '∞' : egg.pool.length} Pokémon possibles
+                    </span>
+                    <div className={s.silhouettes}>
+                      {egg.pool.length > 0
+                        ? egg.pool.map(p => (
+                            <img
+                              key={p.id}
+                              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`}
+                              alt=""
+                              className={s.silhouetteSprite}
+                              draggable={false}
+                            />
+                          ))
+                        : <span className={s.mysteryHint}>· · · · ·</span>
+                      }
+                    </div>
+                  </div>
+                ) : (
+                  <div className={s.cardContentSmall}>
+                    <EggShape egg={egg} size={90}/>
+                    <span className={s.eggNameSmall}>{egg.name}</span>
+                  </div>
+                )}
+              </button>
+            )
+
             return (
               <div
                 key={i}
                 className={[s.trackCard, isDealingCard ? s.dealing : ''].filter(Boolean).join(' ')}
                 style={{
-                  // During dealing the animation handles transform + opacity
                   ...(isDealingCard ? {} : { transform: `scale(${scale})`, opacity }),
-                  zIndex:        zIdx,
+                  zIndex: zIdx,
                   pointerEvents: isVisible ? 'auto' : 'none',
                   ...dealStyle,
                 }}
               >
-                {isCenter ? (
-                  <Card3D onHoloMove={holoMove} onHoloLeave={holoLeave}>
-                    {cardButton}
-                  </Card3D>
-                ) : cardButton}
+                {isCenter
+                  ? <Card3D onHoloMove={holoMove} onHoloLeave={holoLeave}>{cardButton}</Card3D>
+                  : cardButton
+                }
               </div>
             )
           })}
         </div>
 
-        {/* Right arrow */}
         <button className={`${s.navArrow} ${s.navRight}`} onClick={next} aria-label="Suivant">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor"
+            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M7 4L13 10L7 16"/>
           </svg>
         </button>
+
       </div>
 
       {/* CTA */}
       <div className={s.ctaWrap}>
         <button className={s.cta}>
           <Pokeball/>
-          Adopt {activePokemon.name}
+          Choisir l'{activeEgg.name} →
         </button>
       </div>
 

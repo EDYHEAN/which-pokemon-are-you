@@ -29,3 +29,22 @@ body {
     display: block !important;
   }
 }
+
+/* ── Custom cursor (desktop only) ──────────────────────────── */
+
+@media (min-width: 768px) {
+  body, body * {
+    cursor: url('/src/assets/cursor.png') 3 3, auto !important;
+  }
+
+  button,
+  button *,
+  a,
+  a *,
+  [onClick],
+  [onClick] *,
+  .btn,
+  .btn * {
+    cursor: url('/src/assets/hand.png') 3 3, pointer !important;
+  }
+}

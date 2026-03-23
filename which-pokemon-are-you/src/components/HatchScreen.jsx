@@ -229,6 +229,7 @@ export default function HatchScreen({ egg, pokemon, isNight, onRestart, onConfir
   const [phase, setPhase]           = useState('shaking')
   const [flashClass, setFlashClass] = useState(s.flashIn)
   const [filterStyle, setFilterStyle] = useState({ filter: 'brightness(0)' })
+  const [customName, setCustomName] = useState('')
   const phrase = useRef(PHRASES[Math.floor(Math.random() * PHRASES.length)]).current
 
   useEffect(() => {
@@ -324,10 +325,19 @@ export default function HatchScreen({ egg, pokemon, isNight, onRestart, onConfir
             />
             <p className={s.pokemonName}>{pokemon.name}</p>
             <p className={s.pokemonPhrase}>{phrase}</p>
+            <p className={s.nicknameLabel}>Donnez-lui un surnom</p>
+            <input
+              className={s.nameInput}
+              value={customName}
+              onChange={e => setCustomName(e.target.value)}
+              placeholder="Laisser tel quel..."
+              maxLength={24}
+              spellCheck={false}
+            />
             <div className={s.ctaWrap}>
-              <button className={s.cta} onClick={onConfirm}>
+              <button className={s.cta} onClick={() => onConfirm(customName || pokemon.name)}>
                 <img src={spriteUrl} alt="" className={s.ctaSprite}/>
-                Go m'occuper de {pokemon.name} →
+                Go m'occuper de {customName || pokemon.name} →
               </button>
             </div>
           </>

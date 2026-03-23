@@ -146,3 +146,192 @@
 
 .screen-exit  { animation: screenExit  0.35s ease forwards; pointer-events: none; }
 .screen-enter { animation: screenEnter 0.4s  ease forwards; }
+
+/* ── App layout wrappers ─────────────────────────────────────── */
+
+.app-sidebar { display: none; }
+
+.app-center {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.game-frame {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ── Desktop layout (min-width: 768px) ───────────────────────── */
+
+@media (min-width: 768px) {
+
+  .app-root {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    align-items: center;
+  }
+
+  /* Hide mobile toggle — sidebar has its own */
+  .app-toggle { display: none; }
+
+  /* ── Sidebar ── */
+
+  .app-sidebar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 72px;
+    height: 100vh;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+    padding: 24px 0;
+  }
+
+  .sidebar-logo {
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 32px;
+    transition: color 0.8s ease;
+  }
+
+  .is-day .sidebar-logo { color: rgba(0, 0, 0, 0.35); }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    align-items: center;
+  }
+
+  .sidebar-tab {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.35);
+    transition: background 0.2s ease, color 0.2s ease;
+    position: relative;
+  }
+
+  .sidebar-tab:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  .sidebar-tab.active {
+    background: rgba(255, 255, 255, 0.14);
+    color: white;
+  }
+
+  .sidebar-tab-disabled {
+    pointer-events: none;
+    opacity: 0.25;
+  }
+
+  /* Tooltip on hover */
+  .sidebar-tab::after {
+    content: attr(title);
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(20, 20, 30, 0.85);
+    color: #F0EDE8;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.06em;
+    padding: 5px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+  }
+
+  .sidebar-tab:hover::after { opacity: 1; }
+
+  /* Day mode sidebar */
+  .is-day .sidebar-tab { color: rgba(0, 0, 0, 0.3); }
+  .is-day .sidebar-tab:hover  { background: rgba(0, 0, 0, 0.06); color: rgba(0, 0, 0, 0.65); }
+  .is-day .sidebar-tab.active { background: rgba(0, 0, 0, 0.08); color: #1a1a1a; }
+  .is-day .sidebar-tab::after { background: rgba(255, 255, 255, 0.9); color: #1a1a1a; }
+
+  .sidebar-toggle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.55);
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: white;
+  }
+
+  .is-day .sidebar-toggle {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: rgba(0, 0, 0, 0.45);
+  }
+
+  .is-day .sidebar-toggle:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #1a1a1a;
+  }
+
+  /* ── Game area ── */
+
+  .app-center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    min-height: 0;
+  }
+
+  .game-frame {
+    width: 390px;
+    height: min(100vh, 844px);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow:
+      0 40px 100px rgba(0, 0, 0, 0.45),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+    transform: translateZ(0);
+    flex: none;
+    min-height: unset;
+  }
+
+  .is-day .game-frame {
+    box-shadow:
+      0 40px 100px rgba(0, 0, 0, 0.2),
+      0 0 0 1px rgba(0, 0, 0, 0.08);
+  }
+
+  .app-center .screen-wrapper {
+    min-height: min(100vh, 844px);
+  }
+}

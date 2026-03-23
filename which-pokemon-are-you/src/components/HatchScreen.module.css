@@ -346,3 +346,47 @@
 .retry:hover { color: #888; }
 .night .retry { color: #666; }
 .night .retry:hover { color: #aaa; }
+
+/* ── Name input ──────────────────────────────────────────────── */
+
+.nicknameLabel {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin: 0;
+  animation: fadeUp 0.4s 0.05s ease both;
+}
+.day .nicknameLabel { color: rgba(0,0,0,0.35); }
+
+.nameInput {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+  text-align: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 300;
+  color: white;
+  max-width: 200px;
+  width: 100%;
+  outline: none;
+  padding: 4px 0 6px;
+  transition: border-color 0.2s ease;
+  animation: fadeUp 0.4s 0.1s ease both;
+}
+
+.nameInput::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.nameInput:focus {
+  border-bottom-color: rgba(255, 255, 255, 0.7);
+}
+
+.night .nameInput { color: #F0EDE8; }
+.day  .nameInput { color: #1a1a1a; border-bottom-color: rgba(0,0,0,0.3); }
+.day  .nameInput:focus { border-bottom-color: rgba(0,0,0,0.6); }
+.day  .nameInput::placeholder { color: rgba(0,0,0,0.3); }

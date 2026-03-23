@@ -307,6 +307,7 @@ export default function EggSelector({ isNight, onBack, onChoose }) {
 
   const trackRef    = useRef(null)
   const isMoving    = useRef(false)
+  const isAnimating = useRef(false)
   const bubbleTimer = useRef(null)
   const touchStartX = useRef(null)
 
@@ -329,10 +330,12 @@ export default function EggSelector({ isNight, onBack, onChoose }) {
 
   // ── Navigation ───────────────────────────────────────────
   const navigate = useCallback((target) => {
-    if (isMoving.current) return
+    if (isAnimating.current) return
+    isAnimating.current = true
     isMoving.current = true
     setBubble(null)
     setExtIndex(target)
+    setTimeout(() => { isAnimating.current = false }, 500)
   }, [setExtIndex])
 
   const prev = useCallback(() => navigate(extIndexRef.current - 1), [navigate])
@@ -352,7 +355,7 @@ export default function EggSelector({ isNight, onBack, onChoose }) {
       setExtIndex(newIdx)
       requestAnimationFrame(() => requestAnimationFrame(() => {
         t.classList.remove(s.noTransition)
-        t.style.transition = ''
+        t.style.transition = 'transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
         isMoving.current = false
       }))
     } else {

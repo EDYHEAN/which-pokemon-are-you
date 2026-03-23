@@ -4,7 +4,9 @@
       "Bash(npm run:*)",
       "Bash(git:*)",
       "Bash(curl:*)",
-      "Bash(lsof -ti:5174)"
+      "Bash(lsof -ti:5174)",
+      "Bash(mv PokemonSelector.jsx EggSelector.jsx)",
+      "Bash(mv PokemonSelector.module.css EggSelector.module.css)"
     ]
   }
 }

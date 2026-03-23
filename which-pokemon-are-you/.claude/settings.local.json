@@ -12,7 +12,8 @@
       "Bash(node -e \"require\\(''''sharp''''\\)\")",
       "Bash(node -e \"require\\(''''jimp''''\\)\")",
       "Bash(npm list:*)",
-      "Bash(powershell -Command \":*)"
+      "Bash(powershell -Command \":*)",
+      "Bash(npx vite:*)"
     ]
   }
 }

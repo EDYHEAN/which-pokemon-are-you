@@ -1,0 +1,348 @@
+/* ── Keyframes ─────────────────────────────────────────────── */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes wobbleIntense {
+  0%   { transform: rotate(0deg)    translateX(0); }
+  10%  { transform: rotate(-15deg)  translateX(-8px); }
+  20%  { transform: rotate(15deg)   translateX(8px); }
+  30%  { transform: rotate(-12deg)  translateX(-6px); }
+  40%  { transform: rotate(12deg)   translateX(6px); }
+  50%  { transform: rotate(-8deg)   translateX(-4px); }
+  60%  { transform: rotate(8deg)    translateX(4px); }
+  70%  { transform: rotate(-4deg)   translateX(-2px); }
+  80%  { transform: rotate(4deg)    translateX(2px); }
+  90%  { transform: rotate(-2deg)   translateX(-1px); }
+  100% { transform: rotate(0deg)    translateX(0); }
+}
+
+@keyframes crackGlowFast {
+  0%, 30% { filter: drop-shadow(0 0 0px  rgba(255, 220, 100, 0)); }
+  35%      { filter: drop-shadow(0 0 24px rgba(255, 220, 100, 0.8)); }
+  40%      { filter: drop-shadow(0 0 4px  rgba(255, 220, 100, 0.2)); }
+  50%      { filter: drop-shadow(0 0 28px rgba(255, 220, 100, 0.9)); }
+  55%      { filter: drop-shadow(0 0 6px  rgba(255, 220, 100, 0.3)); }
+  65%      { filter: drop-shadow(0 0 32px rgba(255, 220, 100, 1)); }
+  70%      { filter: drop-shadow(0 0 8px  rgba(255, 220, 100, 0.4)); }
+  80%      { filter: drop-shadow(0 0 36px rgba(255, 220, 100, 1)); }
+  90%      { filter: drop-shadow(0 0 40px rgba(255, 230, 120, 1)); }
+  100%     { filter: drop-shadow(0 0 50px rgba(255, 255, 200, 1)); }
+}
+
+@keyframes crackAppear1 {
+  0%,  40% { opacity: 0; }
+  50%      { opacity: 0.7; }
+  100%     { opacity: 0.9; }
+}
+
+@keyframes crackAppear2 {
+  0%,  55% { opacity: 0; }
+  65%      { opacity: 0.65; }
+  100%     { opacity: 0.85; }
+}
+
+@keyframes crackAppear3 {
+  0%,  70% { opacity: 0; }
+  80%      { opacity: 0.6; }
+  100%     { opacity: 0.8; }
+}
+
+@keyframes particleFloat {
+  0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--px), var(--py)) scale(0.3); }
+}
+
+@keyframes explodeScale {
+  0%   { transform: scale(1); opacity: 1; }
+  60%  { transform: scale(1.4); opacity: 1; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+@keyframes flashIn {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes flashOut {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.03); }
+}
+
+@keyframes revealBounce {
+  0%   { transform: scale(0.9); }
+  60%  { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes floatSoft {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+@keyframes orbitParticle {
+  from { transform: rotate(var(--start-angle)) translateX(var(--radius)) scale(1); opacity: 0.8; }
+  to   { transform: rotate(calc(var(--start-angle) + 360deg)) translateX(var(--radius)) scale(0.6); opacity: 0.4; }
+}
+
+@keyframes shimmer {
+  0%   { transform: translateX(-180%) skewX(-16deg); }
+  100% { transform: translateX(280%)  skewX(-16deg); }
+}
+
+/* ── Page ───────────────────────────────────────────────────── */
+
+.page {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  animation: fadeIn 0.4s ease forwards;
+}
+
+/* ── Flash overlay ───────────────────────────────────────────── */
+
+.flash {
+  position: fixed;
+  inset: 0;
+  background: white;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.flashIn  { animation: flashIn  0.25s ease forwards; }
+.flashOut { animation: flashOut 0.4s  ease 0.3s forwards; }
+
+/* ── Egg internals ──────────────────────────────────────────── */
+
+.eggPattern {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Stage (centred content area) ───────────────────────────── */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  position: relative;
+}
+
+/* ── Egg wrapper ─────────────────────────────────────────────── */
+
+.eggWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 240px;
+  height: 280px;
+}
+
+.eggShaking {
+  animation:
+    wobbleIntense 0.15s ease-in-out infinite,
+    crackGlowFast 2s ease-in-out forwards;
+}
+
+.eggExploding {
+  animation: explodeScale 0.5s ease-in forwards;
+}
+
+/* ── SVG cracks overlay ──────────────────────────────────────── */
+
+.cracks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.crack1 { animation: crackAppear1 2s ease forwards; }
+.crack2 { animation: crackAppear2 2s ease forwards; }
+.crack3 { animation: crackAppear3 2s ease forwards; }
+
+/* ── Burst particles ─────────────────────────────────────────── */
+
+.particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FFD700;
+  animation: particleFloat 0.8s ease-out var(--delay, 0ms) both;
+}
+
+/* ── Sprite ──────────────────────────────────────────────────── */
+
+.sprite {
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+}
+
+.spriteSilhouette {
+  filter: brightness(0);
+  animation: breathe 1s ease-in-out infinite;
+}
+
+.spriteRevealing {
+  animation:
+    revealBounce 1s ease forwards;
+  transition: filter 1s ease-in;
+}
+
+.spriteResult {
+  animation: floatSoft 3s ease-in-out infinite;
+}
+
+/* ── Orbit ring (particles around silhouette) ─────────────────── */
+
+.orbitRing {
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  pointer-events: none;
+}
+
+.orbitDot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin: -3.5px;
+  animation: orbitParticle 2s linear infinite;
+}
+
+/* ── Labels ──────────────────────────────────────────────────── */
+
+.mystery {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 300;
+  color: #1a1a1a;
+  letter-spacing: 0.1em;
+  animation: fadeIn 0.4s ease forwards;
+  transition: color 0.8s ease;
+}
+.night .mystery { color: #F0EDE8; }
+
+.pokemonName {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px;
+  font-weight: 300;
+  color: #1a1a1a;
+  text-align: center;
+  margin: 0;
+  animation: fadeUp 0.5s ease forwards;
+  transition: color 0.8s ease;
+}
+.night .pokemonName { color: #F0EDE8; }
+
+.pokemonPhrase {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  font-style: italic;
+  color: #888;
+  text-align: center;
+  margin: 0;
+  animation: fadeUp 0.5s 0.15s ease both;
+}
+
+/* ── CTAs ────────────────────────────────────────────────────── */
+
+.ctaWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  animation: fadeUp 0.5s 0.3s ease both;
+}
+
+.cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  color: #111;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  height: 56px;
+  padding: 0 28px;
+  white-space: nowrap;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.cta:hover { opacity: 0.85; transform: translateY(-2px) scale(1.01); }
+.cta::after {
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 40%; height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.55) 50%, transparent 100%);
+  animation: shimmer 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.ctaSprite {
+  width: 28px; height: 28px;
+  object-fit: contain; flex-shrink: 0;
+}
+
+.retry {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  color: #bbb;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: color 0.2s ease;
+}
+.retry:hover { color: #888; }
+.night .retry { color: #666; }
+.night .retry:hover { color: #aaa; }

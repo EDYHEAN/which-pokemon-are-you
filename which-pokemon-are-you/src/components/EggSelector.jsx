@@ -283,7 +283,21 @@ function Pokeball() {
 }
 
 // ── Main component ────────────────────────────────────────────
-export default function EggSelector({ isNight, onBack }) {
+// All eggs pools merged for mystery egg
+const allPools = [
+  { id: 4, name: 'Salamèche' }, { id: 58, name: 'Caninos' }, { id: 77, name: 'Ponyta' },
+  { id: 7, name: 'Carapuce' }, { id: 54, name: 'Psykokwak' }, { id: 116, name: 'Hypotrempe' },
+  { id: 1, name: 'Bulbizarre' }, { id: 102, name: 'Noeunoeuf' },
+  { id: 25, name: 'Pikachu' }, { id: 81, name: 'Magnéti' },
+  { id: 35, name: 'Mélofée' }, { id: 39, name: 'Rondoudou' },
+  { id: 92, name: 'Fantominus' }, { id: 104, name: 'Osselait' }, { id: 23, name: 'Abo' },
+  { id: 63, name: 'Abra' }, { id: 137, name: 'Porygon' },
+  { id: 52, name: 'Miaouss' }, { id: 133, name: 'Évoli' }, { id: 132, name: 'Métamorph' },
+  { id: 79, name: 'Ramoloss' }, { id: 143, name: 'Ronflex' },
+  { id: 147, name: 'Minidraco' }, { id: 131, name: 'Lokhlass' }, { id: 115, name: 'Kangourex' },
+]
+
+export default function EggSelector({ isNight, onBack, onChoose }) {
   const [extIndex, setExtIndexState] = useState(CLONE)
   const extIndexRef = useRef(CLONE)
 
@@ -473,7 +487,7 @@ export default function EggSelector({ isNight, onBack }) {
 
                 {isCenter ? (
                   <div className={s.cardContent}>
-                    <EggShape egg={egg} size={120} animated/>
+                    <EggShape egg={egg} size={72} animated/>
                     <span className={s.eggName}>{egg.name}</span>
                     <span className={s.eggHint}>{egg.hint}</span>
                     <span className={s.poolCount}>
@@ -496,7 +510,7 @@ export default function EggSelector({ isNight, onBack }) {
                   </div>
                 ) : (
                   <div className={s.cardContentSmall}>
-                    <EggShape egg={egg} size={90}/>
+                    <EggShape egg={egg} size={54}/>
                     <span className={s.eggNameSmall}>{egg.name}</span>
                   </div>
                 )}
@@ -534,8 +548,12 @@ export default function EggSelector({ isNight, onBack }) {
 
       {/* CTA */}
       <div className={s.ctaWrap}>
-        <button className={s.cta}>
-          <Pokeball/>
+        <button className={s.cta} onClick={() => {
+          const pool = activeEgg.pool.length > 0 ? activeEgg.pool : allPools
+          const pokemon = pool[Math.floor(Math.random() * pool.length)]
+          onChoose?.(activeEgg, pokemon)
+        }}>
+          <EggShape egg={activeEgg} size={22}/>
           Choisir l'{activeEgg.name} →
         </button>
       </div>

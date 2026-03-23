@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react'
 import Landing from './components/Landing'
 import EggSelector from './components/EggSelector'
+import HatchScreen from './components/HatchScreen'
+import PokemonHome from './components/PokemonHome'
 import './App.css'
 
 function SunIcon() {
@@ -31,6 +33,7 @@ export default function App() {
   const [screen, setScreen] = useState('landing')
   const [phase,  setPhase]  = useState('idle')   // 'idle' | 'exit' | 'enter'
   const [isNight, setIsNight] = useState(true)
+  const [hatchData, setHatchData] = useState(null) // { egg, pokemon }
 
   // Stable stars — generated once
   const stars = useRef(
@@ -98,10 +101,24 @@ export default function App() {
 
       {/* Screen content — crossfades on navigation */}
       <div className={screenCls}>
-        {screen === 'selector' ? (
+        {screen === 'home' ? (
+          <PokemonHome pokemon={hatchData.pokemon}/>
+        ) : screen === 'hatching' ? (
+          <HatchScreen
+            egg={hatchData.egg}
+            pokemon={hatchData.pokemon}
+            isNight={isNight}
+            onRestart={() => { setHatchData(null); goTo('landing') }}
+            onConfirm={() => goTo('home')}
+          />
+        ) : screen === 'selector' ? (
           <EggSelector
             isNight={isNight}
             onBack={() => goTo('landing')}
+            onChoose={(egg, pokemon) => {
+              setHatchData({ egg, pokemon })
+              goTo('hatching')
+            }}
           />
         ) : (
           <Landing

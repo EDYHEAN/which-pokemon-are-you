@@ -1,0 +1,195 @@
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes overlayOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes evolveFlash {
+  0%, 100% { filter: brightness(1) drop-shadow(0 0 0 transparent); }
+  50%       { filter: brightness(12) drop-shadow(0 0 30px rgba(255,255,255,1)); }
+}
+
+@keyframes whiteExpand {
+  0%   { opacity: 0; }
+  30%  { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+@keyframes spriteEmerge {
+  0%   { transform: scale(0.4); opacity: 0; filter: brightness(20); }
+  40%  { transform: scale(1.25); opacity: 1; filter: brightness(4); }
+  70%  { transform: scale(0.95); filter: brightness(1.5); }
+  100% { transform: scale(1);    opacity: 1; filter: brightness(1); }
+}
+
+@keyframes resultIn {
+  0%   { transform: scale(0.8) translateY(20px); opacity: 0; }
+  100% { transform: scale(1) translateY(0);      opacity: 1; }
+}
+
+@keyframes textShine {
+  0%   { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes particleBurst {
+  0%   { transform: translate(0, 0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(0.3); opacity: 0; }
+}
+
+@keyframes shimmer {
+  0%, 100% { text-shadow: 0 0 20px rgba(255,215,0,0.6); }
+  50%       { text-shadow: 0 0 40px rgba(255,215,0,1), 0 0 80px rgba(255,215,0,0.4); }
+}
+
+/* ── Base overlay ─────────────────────────────────────────────── */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: overlayIn 0.3s ease forwards;
+  overflow: hidden;
+}
+
+.overlay.closing {
+  animation: overlayOut 0.35s ease forwards;
+}
+
+/* ── Phase 1 — flash ─────────────────────────────────────────── */
+
+.phaseOne {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flashSprite {
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+  animation: evolveFlash 0.8s ease infinite;
+}
+
+/* ── Phase 2 — white ──────────────────────────────────────────── */
+
+.whiteFlash {
+  position: absolute;
+  inset: 0;
+  background: white;
+  animation: whiteExpand 0.5s ease forwards;
+}
+
+/* ── Phase 3 — emerge ─────────────────────────────────────────── */
+
+.phaseThree {
+  position: absolute;
+  inset: 0;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emergeSprite {
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+  animation: spriteEmerge 1s ease forwards;
+}
+
+/* ── Phase 4 — result ─────────────────────────────────────────── */
+
+.particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 3px;
+  pointer-events: none;
+  animation: particleBurst 1.2s ease-out var(--delay, 0s) both;
+}
+
+.resultContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 24px;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(12px);
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  animation: overlayIn 0.4s ease forwards;
+}
+
+.resultSprite {
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+  animation: resultIn 0.5s ease forwards;
+  filter: drop-shadow(0 4px 20px rgba(255,255,255,0.15));
+}
+
+.shinyLabel {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #FFD700;
+  letter-spacing: 0.06em;
+  margin: -8px 0 0;
+  animation: textShine 0.4s 0.2s ease both;
+}
+
+.evolveText {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  font-weight: 300;
+  color: white;
+  margin: 0;
+  text-align: center;
+  line-height: 1.4;
+  animation: textShine 0.4s 0.15s ease both;
+}
+
+.oldName {
+  color: rgba(255,255,255,0.55);
+  font-style: italic;
+}
+
+.newName {
+  color: #FFD700;
+  font-weight: 600;
+  animation: shimmer 2s 0.6s ease infinite;
+}
+
+.closeBtn {
+  margin-top: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  color: #111;
+  background: rgba(255,255,255,0.92);
+  border: none;
+  border-radius: 999px;
+  height: 48px;
+  padding: 0 36px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+  animation: textShine 0.4s 0.3s ease both;
+}
+
+.closeBtn:hover { opacity: 0.85; transform: translateY(-2px); }

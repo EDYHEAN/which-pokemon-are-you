@@ -29,6 +29,7 @@ export default function DexScreen({ isNight }) {
     setItems(loadInventory())
   }, [])
 
+  const dexMap = new Map(dex.map(p => [p.id, p]))
   const discoveredIds = new Set(dex.map(p => p.id))
   const discoveredItemIds = new Set(items.map(i => i.id))
 
@@ -37,8 +38,9 @@ export default function DexScreen({ isNight }) {
   const extraDiscovered = dex.filter(p => !poolIds.has(p.id))
   const fullPool = [...extraDiscovered, ...POKEMON_POOL]
 
-  const spriteUrl = (id) =>
-    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
+  const spriteUrl = (id, isShiny = false) => isShiny
+    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/${id}.png`
+    : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
 
   return (
     <div className={`${s.page} ${isNight ? s.night : s.day}`}>
@@ -64,21 +66,33 @@ export default function DexScreen({ isNight }) {
           <div className={s.grid3}>
             {fullPool.map(p => {
               const known = discoveredIds.has(p.id)
+              const dexEntry = dexMap.get(p.id)
+              const isShiny = dexEntry?.isShiny ?? false
               return (
                 <div
                   key={p.id}
                   className={`${s.pokeCard} ${known ? s.known : s.unknown}`}
-                  onClick={() => known && setSelected(p)}
+                  onClick={() => known && setSelected({ id: p.id, name: dexEntry?.name ?? p.name, isShiny })}
                 >
                   <img
-                    src={spriteUrl(p.id)}
+                    src={spriteUrl(p.id, known && isShiny)}
                     alt={known ? p.name : '???'}
                     className={s.pokeSprite}
                     style={known ? {} : { filter:'grayscale(1) brightness(0.3)' }}
                     draggable={false}
                   />
-                  <p className={s.pokeName}>{known ? p.name : '???'}</p>
+                  <p className={s.pokeName}>{known ? (dexEntry?.name ?? p.name) : '???'}</p>
                   <p className={s.pokeNum}>#{String(p.id).padStart(3, '0')}</p>
+                  {known && isShiny && (
+                    <span style={{
+                      position: 'absolute', top: 4, right: 4,
+                      fontSize: 9, fontFamily: "'DM Sans', sans-serif",
+                      fontWeight: 700, color: '#FFD700',
+                      background: 'rgba(0,0,0,0.55)', borderRadius: 6,
+                      padding: '2px 5px', lineHeight: 1.4,
+                      letterSpacing: '0.03em', pointerEvents: 'none',
+                    }}>✨ Shiny</span>
+                  )}
                 </div>
               )
             })}
@@ -108,7 +122,19 @@ export default function DexScreen({ isNight }) {
         <div className={s.modalOverlay} onClick={() => setSelected(null)}>
           <div className={s.modal} onClick={e => e.stopPropagation()}>
             <button className={s.modalClose} onClick={() => setSelected(null)}>×</button>
-            <img src={spriteUrl(selected.id)} alt={selected.name} className={s.modalSprite} draggable={false}/>
+            <img
+              src={spriteUrl(selected.id, selected.isShiny)}
+              alt={selected.name}
+              className={s.modalSprite}
+              style={selected.isShiny ? { filter: 'drop-shadow(0 0 12px rgba(255,215,0,0.6))' } : {}}
+              draggable={false}
+            />
+            {selected.isShiny && (
+              <p style={{ fontSize: 12, color: '#FFD700', fontFamily: "'DM Sans', sans-serif",
+                          fontWeight: 700, margin: '0 0 4px', letterSpacing: '0.04em' }}>
+                ✨ Shiny
+              </p>
+            )}
             <p className={s.modalName}>{selected.name}</p>
             <p className={s.modalNum}>#{String(selected.id).padStart(3, '0')}</p>
             <button className={s.modalDone} onClick={() => setSelected(null)}>Fermer</button>

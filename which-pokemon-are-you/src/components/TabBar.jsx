@@ -37,30 +37,67 @@ function AccountIcon() {
   )
 }
 
-const TABS = [
-  { id: 'home',    label: 'Home',  Icon: HomeIcon    },
-  { id: 'bag',     label: 'Bag',   Icon: BagIcon     },
-  { id: 'dex',     label: 'Dex',   Icon: DexIcon     },
-  { id: 'account', label: 'Moi',   Icon: AccountIcon },
+function EggTabIcon() {
+  return (
+    <div style={{
+      width: 20,
+      height: 26,
+      background: 'linear-gradient(145deg, #f0ede8, #d4c9b8)',
+      borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
+      border: '1px solid rgba(0,0,0,0.12)',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)',
+      flexShrink: 0,
+    }}/>
+  )
+}
+
+const TABS_LEFT  = [
+  { id: 'home', label: 'Home', Icon: HomeIcon },
+  { id: 'bag',  label: 'Bag',  Icon: BagIcon  },
+  { id: 'dex',  label: 'Dex',  Icon: DexIcon  },
 ]
 
-export default function TabBar({ activeTab, setActiveTab, isNight }) {
+const TABS_RIGHT = [
+  { id: 'account', label: 'Moi', Icon: AccountIcon },
+]
+
+export default function TabBar({ activeTab, setActiveTab, isNight, hatchesAvailable = 0, onEggClick }) {
+  const canHatch = hatchesAvailable > 0
+
+  function renderTab({ id, label, Icon }) {
+    const active = activeTab === id
+    return (
+      <button
+        key={id}
+        className={`${s.tab} ${active ? s.active : ''}`}
+        onClick={() => setActiveTab(id)}
+      >
+        <Icon/>
+        <span className={s.label}>{label}</span>
+        {active && <span className={s.dot}/>}
+      </button>
+    )
+  }
+
   return (
     <div className={`${s.bar} ${isNight ? s.night : s.day}`}>
-      {TABS.map(({ id, label, Icon }) => {
-        const active = activeTab === id
-        return (
-          <button
-            key={id}
-            className={`${s.tab} ${active ? s.active : ''}`}
-            onClick={() => setActiveTab(id)}
-          >
-            <Icon/>
-            <span className={s.label}>{label}</span>
-            {active && <span className={s.dot}/>}
-          </button>
-        )
-      })}
+      {TABS_LEFT.map(renderTab)}
+
+      {/* Egg tab */}
+      <button
+        className={`${s.tab} ${!canHatch ? s.eggDisabled : s.eggActive}`}
+        onClick={() => canHatch && onEggClick?.()}
+      >
+        <div className={s.eggIconWrap}>
+          <EggTabIcon/>
+          {canHatch && (
+            <span className={s.badge}>{hatchesAvailable}</span>
+          )}
+        </div>
+        <span className={s.label}>Oeuf</span>
+      </button>
+
+      {TABS_RIGHT.map(renderTab)}
     </div>
   )
 }

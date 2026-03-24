@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Landing from './components/Landing'
 import EggSelector from './components/EggSelector'
 import HatchScreen from './components/HatchScreen'
@@ -7,7 +7,8 @@ import TabBar from './components/TabBar'
 import BagScreen from './components/BagScreen'
 import DexScreen from './components/DexScreen'
 import AccountScreen from './components/AccountScreen'
-import { addToDex, STORAGE_KEY, INVENTORY_KEY, DEX_KEY } from './config/gameConfig'
+import { addToDex, STORAGE_KEY, INVENTORY_KEY, DEX_KEY, PROGRESS_KEY, loadProgress, saveProgress } from './config/gameConfig'
+import EvolutionOverlay from './components/EvolutionOverlay'
 import './App.css'
 
 function PokeballIcon() {
@@ -89,12 +90,42 @@ function MoonIcon() {
   )
 }
 
+function SideEggIcon() {
+  return (
+    <div style={{
+      width: 28,
+      height: 35,
+      background: 'linear-gradient(145deg, #f0ede8, #d4c9b8)',
+      borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
+      border: '1px solid rgba(0,0,0,0.1)',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)',
+      flexShrink: 0,
+    }}/>
+  )
+}
+
+function computeHatchesAvailable() {
+  try {
+    const prog = loadProgress()
+    const { allPokemon = [], hatchesDone = 0 } = prog
+    const totalLevels = allPokemon.reduce((sum, p) => sum + (p.level || 1), 0)
+    const firstPokemonLv10 = allPokemon.some(p => (p.level || 1) >= 10) ? 1 : 0
+    const fromLevels = Math.floor(totalLevels / 15)
+    return Math.max(0, Math.max(firstPokemonLv10, fromLevels) - hatchesDone)
+  } catch { return 0 }
+}
+
 export default function App() {
   const [screen, setScreen]     = useState('landing')
   const [phase,  setPhase]      = useState('idle')   // 'idle' | 'exit' | 'enter'
   const [isNight, setIsNight]   = useState(true)
   const [hatchData, setHatchData] = useState(null)   // { egg, pokemon }
   const [activeTab, setActiveTab] = useState('home')
+  const [hatchesAvailable, setHatchesAvailable] = useState(() => computeHatchesAvailable())
+  const [pokemonSwitchKey, setPokemonSwitchKey] = useState(0)
+  const [evolutionData, setEvolutionData] = useState(null) // { oldId, oldName, newId, newName, isShiny }
+
+  const rehatchRef = useRef(false)
 
   // Stable stars — generated once
   const stars = useRef(
@@ -108,6 +139,25 @@ export default function App() {
     }))
   ).current
 
+  // Recompute when returning to home (catches level-ups that happened while app open)
+  useEffect(() => {
+    if (screen === 'home') setHatchesAvailable(computeHatchesAvailable())
+  }, [screen])
+
+  // Listen for level-up events dispatched by PokemonHome
+  useEffect(() => {
+    const handler = () => setHatchesAvailable(computeHatchesAvailable())
+    window.addEventListener('poketama-level-up', handler)
+    return () => window.removeEventListener('poketama-level-up', handler)
+  }, [])
+
+  // Listen for evolution events
+  useEffect(() => {
+    const handler = (e) => setEvolutionData(e.detail)
+    window.addEventListener('poketama-evolve', handler)
+    return () => window.removeEventListener('poketama-evolve', handler)
+  }, [])
+
   const goTo = (target) => {
     setPhase('exit')
     setTimeout(() => {
@@ -116,13 +166,43 @@ export default function App() {
     }, 350)
   }
 
+  function handleEvolutionClose() {
+    const { oldId, newId, newName, isShiny } = evolutionData
+    const newPokemon = { id: newId, name: newName, isShiny: isShiny ?? false }
+    // Update progress: replace old pokemon entry with evolved one
+    const prog = loadProgress()
+    const pi = prog.allPokemon.findIndex(p => p.id === oldId)
+    if (pi >= 0) prog.allPokemon[pi] = { ...prog.allPokemon[pi], id: newId, name: newName }
+    saveProgress(prog)
+    // Add to dex
+    addToDex(newPokemon)
+    setEvolutionData(null)
+    setHatchData(d => ({ ...d, pokemon: newPokemon }))
+    setPokemonSwitchKey(k => k + 1)
+    setActiveTab('home')
+  }
+
+  function handleSwitchPokemon(newPokemon) {
+    setHatchData(d => ({ ...d, pokemon: newPokemon }))
+    setPokemonSwitchKey(k => k + 1)
+    setActiveTab('home')
+  }
+
   function handleReset() {
     localStorage.removeItem(STORAGE_KEY)
     localStorage.removeItem(INVENTORY_KEY)
     localStorage.removeItem(DEX_KEY)
+    localStorage.removeItem(PROGRESS_KEY)
     setHatchData(null)
     setActiveTab('home')
+    setHatchesAvailable(0)
     goTo('landing')
+  }
+
+  function handleEggButton() {
+    if (hatchesAvailable <= 0) return
+    rehatchRef.current = true
+    goTo('selector')
   }
 
   const mode = isNight ? 'is-night' : 'is-day'
@@ -190,6 +270,20 @@ export default function App() {
             </button>
           ))}
         </nav>
+        {screen === 'home' && (
+          <div className="sidebar-egg-wrap">
+            <button
+              className={`sidebar-egg ${hatchesAvailable > 0 ? 'sidebar-egg-active' : 'sidebar-egg-inactive'}`}
+              onClick={() => hatchesAvailable > 0 && handleEggButton()}
+              title="Faire éclore un œuf"
+            >
+              <SideEggIcon/>
+              {hatchesAvailable > 0 && (
+                <span className="sidebar-egg-badge">{hatchesAvailable}</span>
+              )}
+            </button>
+          </div>
+        )}
         <button
           className="sidebar-toggle"
           onClick={() => setIsNight(n => !n)}
@@ -207,11 +301,17 @@ export default function App() {
           <div className={screenCls}>
             {screen === 'home' ? (
               <>
-                {activeTab === 'home'    && <PokemonHome pokemon={hatchData.pokemon} isNight={isNight}/>}
+                {activeTab === 'home'    && <PokemonHome key={pokemonSwitchKey} pokemon={hatchData.pokemon} isNight={isNight} onSwitchPokemon={handleSwitchPokemon}/>}
                 {activeTab === 'bag'     && <BagScreen pokemon={hatchData.pokemon} isNight={isNight}/>}
                 {activeTab === 'dex'     && <DexScreen isNight={isNight}/>}
                 {activeTab === 'account' && <AccountScreen pokemon={hatchData.pokemon} isNight={isNight} onReset={handleReset}/>}
-                <TabBar activeTab={activeTab} setActiveTab={setActiveTab} isNight={isNight}/>
+                <TabBar
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  isNight={isNight}
+                  hatchesAvailable={hatchesAvailable}
+                  onEggClick={handleEggButton}
+                />
               </>
             ) : screen === 'hatching' ? (
               <HatchScreen
@@ -219,10 +319,30 @@ export default function App() {
                 pokemon={hatchData.pokemon}
                 isNight={isNight}
                 onRestart={() => { setHatchData(null); goTo('landing') }}
-                onConfirm={(customName) => {
-                  const updatedPokemon = { ...hatchData.pokemon, name: customName }
+                onConfirm={(customName, isShiny = false) => {
+                  const updatedPokemon = { ...hatchData.pokemon, name: customName, isShiny }
                   setHatchData(d => ({ ...d, pokemon: updatedPokemon }))
                   addToDex(updatedPokemon)
+
+                  if (rehatchRef.current) {
+                    // Egg button re-hatch: increment hatchesDone
+                    const prog = loadProgress()
+                    prog.hatchesDone = (prog.hatchesDone || 0) + 1
+                    if (!prog.allPokemon.find(p => p.id === updatedPokemon.id)) {
+                      prog.allPokemon.push({ id: updatedPokemon.id, name: updatedPokemon.name, level: 1 })
+                    }
+                    saveProgress(prog)
+                    rehatchRef.current = false
+                  } else {
+                    // First hatch: seed progress with this pokemon
+                    const prog = loadProgress()
+                    if (!prog.allPokemon.find(p => p.id === updatedPokemon.id)) {
+                      prog.allPokemon.push({ id: updatedPokemon.id, name: updatedPokemon.name, level: 1 })
+                      saveProgress(prog)
+                    }
+                  }
+
+                  setHatchesAvailable(computeHatchesAvailable())
                   setActiveTab('home')
                   goTo('home')
                 }}
@@ -246,6 +366,16 @@ export default function App() {
 
         </div>
       </div>
+
+      {evolutionData && (
+        <EvolutionOverlay
+          oldName={evolutionData.oldName}
+          newId={evolutionData.newId}
+          newName={evolutionData.newName}
+          isShiny={evolutionData.isShiny}
+          onClose={handleEvolutionClose}
+        />
+      )}
 
     </div>
   )

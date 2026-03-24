@@ -186,6 +186,87 @@
 }
 .day .emptyHint { color: rgba(0,0,0,0.3); }
 
+/* ── Evolution stones section ────────────────────────────────── */
+
+.stoneList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stoneCard {
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 16px;
+  padding: 14px 14px 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  animation: fadeIn 0.3s ease forwards;
+  transition: border-color 0.2s;
+}
+.day .stoneCard { background: rgba(255,255,255,0.55); border-color: rgba(180,140,0,0.2); }
+
+.stoneInactive { opacity: 0.45; }
+
+.stoneEmoji {
+  font-size: 30px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.stoneInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.stoneHint {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 300;
+  color: rgba(255,215,0,0.7);
+  margin: 0;
+}
+.day .stoneHint { color: rgba(140,100,0,0.75); }
+
+.stoneHintNone {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 300;
+  font-style: italic;
+  color: rgba(255,255,255,0.3);
+  margin: 0;
+}
+.day .stoneHintNone { color: rgba(0,0,0,0.3); }
+
+.stoneBtn {
+  flex-shrink: 0;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  color: #111;
+  background: rgba(255,215,0,0.85);
+  border: none;
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.stoneBtn:hover { opacity: 0.8; }
+
+.stoneBtnDisabled {
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.4);
+  cursor: default;
+}
+.day .stoneBtnDisabled { background: rgba(0,0,0,0.08); color: rgba(0,0,0,0.3); }
+
 .toast {
   position: fixed;
   bottom: 80px;

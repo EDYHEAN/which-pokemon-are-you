@@ -102,6 +102,17 @@
   100% { transform: translateX(280%)  skewX(-16deg); }
 }
 
+@keyframes shinyTextPop {
+  0%   { transform: scale(0);   opacity: 0; }
+  60%  { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes shinyParticleFly {
+  0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+}
+
 /* ── Page ───────────────────────────────────────────────────── */
 
 .page {
@@ -390,3 +401,33 @@
 .day  .nameInput { color: #1a1a1a; border-bottom-color: rgba(0,0,0,0.3); }
 .day  .nameInput:focus { border-bottom-color: rgba(0,0,0,0.6); }
 .day  .nameInput::placeholder { color: rgba(0,0,0,0.3); }
+
+/* ── Shiny ───────────────────────────────────────────────────── */
+
+.shinyLabel {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #FFD700;
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 20px rgba(255,215,0,0.7), 0 0 40px rgba(255,215,0,0.3);
+  margin: 0;
+  animation: shinyTextPop 0.5s ease forwards;
+}
+
+.shinyParticles {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.shinyParticle {
+  position: absolute;
+  border-radius: 50%;
+  background: #FFD700;
+  animation: shinyParticleFly var(--dur, 1.5s) ease var(--delay, 0s) forwards;
+}

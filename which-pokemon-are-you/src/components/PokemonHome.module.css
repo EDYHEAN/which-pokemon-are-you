@@ -55,6 +55,77 @@
   to   { opacity: 1; }
 }
 
+@keyframes wildWalk {
+  0%, 100% { transform: translateX(-30px); }
+  50%       { transform: translateX(30px);  }
+}
+
+@keyframes wildDie {
+  0%   { transform: scale(1);               opacity: 1; }
+  27%  { transform: scale(1.3);             opacity: 1; }
+  100% { transform: rotate(20deg) scale(0); opacity: 0; }
+}
+
+@keyframes dropFall {
+  0%   { transform: translateY(0);    opacity: 1; }
+  75%  { transform: translateY(0);    opacity: 1; }
+  100% { transform: translateY(40px); opacity: 0; }
+}
+
+@keyframes tremble {
+  0%, 100% { transform: rotate(0deg); }
+  25%       { transform: rotate(-8deg); }
+  75%       { transform: rotate(8deg); }
+}
+
+@keyframes hitStarFly {
+  0%   { transform: translate(0, 0);                      opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty));      opacity: 0; }
+}
+
+@keyframes deathFlashAnim {
+  0%   { opacity: 0; }
+  40%  { opacity: 0.6; }
+  100% { opacity: 0; }
+}
+
+@keyframes deathParticleFly {
+  0%   { transform: translate(0, 0);                 opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)); opacity: 0; }
+}
+
+@keyframes deathStarFly {
+  0%   { transform: translateY(0) scale(1);       opacity: 1; }
+  100% { transform: translateY(-50px) scale(0.5); opacity: 0; }
+}
+
+@keyframes dmgRise {
+  0%   { transform: translateY(0);     opacity: 1; }
+  100% { transform: translateY(-30px); opacity: 0; }
+}
+
+@keyframes notifPop {
+  0%   { transform: translateX(-50%) translateY(8px);  opacity: 0; }
+  12%  { transform: translateX(-50%) translateY(0);    opacity: 1; }
+  80%  { transform: translateX(-50%) translateY(0);    opacity: 1; }
+  100% { transform: translateX(-50%) translateY(-4px); opacity: 0; }
+}
+
+@keyframes poopWobble {
+  0%, 100% { transform: rotate(-5deg); }
+  50%       { transform: rotate(5deg); }
+}
+
+@keyframes poopDie {
+  0%   { transform: scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: scale(0) rotate(20deg); opacity: 0; }
+}
+
+@keyframes xpFloatUp {
+  0%   { transform: translateY(0);     opacity: 1; }
+  100% { transform: translateY(-44px); opacity: 0; }
+}
+
 /* ── Root ────────────────────────────────────────────────────── */
 
 .page {
@@ -142,6 +213,171 @@
   z-index: 1;
   animation: waveShift 5s linear infinite;
   pointer-events: none;
+}
+
+/* ── Poops ───────────────────────────────────────────────────── */
+
+.poop {
+  position: absolute;
+  bottom: 8%;
+  font-size: 28px;
+  cursor: pointer;
+  z-index: 2;
+  animation: poopWobble 1.5s ease-in-out infinite;
+  transform-origin: bottom center;
+  user-select: none;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.poopDying {
+  animation: poopDie 0.3s ease forwards !important;
+}
+
+.xpFloat {
+  position: absolute;
+  bottom: 30%;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #FFD700;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+  animation: xpFloatUp 1s ease forwards;
+}
+
+/* ── Wild Pokémon ────────────────────────────────────────────── */
+
+.wildWrap {
+  position: absolute;
+  bottom: 26%;
+  cursor: pointer;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  animation: wildWalk 3s ease-in-out alternate infinite;
+  transform-origin: bottom center;
+}
+
+.wildDying {
+  animation: wildDie 0.55s ease-in forwards !important;
+}
+
+.wildHpBar {
+  width: 48px;
+  height: 4px;
+  background: rgba(0,0,0,0.35);
+  flex-shrink: 0;
+}
+
+.wildHpFill {
+  height: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    #FF4444 0px, #FF4444 4px,
+    transparent 4px, transparent 6px
+  );
+  transition: width 0.1s ease;
+}
+
+.wildSprite {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+  transition: filter 0.05s ease;
+}
+
+.wildHit {
+  filter: brightness(10) sepia(1) saturate(10) hue-rotate(0deg) !important;
+  transition: none !important;
+}
+
+.wildCritical {
+  animation: tremble 0.2s infinite !important;
+}
+
+.hitStar {
+  position: absolute;
+  font-size: 12px;
+  color: #FFD700;
+  pointer-events: none;
+  z-index: 16;
+  line-height: 1;
+  animation: hitStarFly 0.4s ease-out forwards;
+}
+
+.deathFlashOverlay {
+  position: absolute;
+  inset: 0;
+  background: white;
+  pointer-events: none;
+  z-index: 25;
+  animation: deathFlashAnim 0.3s ease forwards;
+}
+
+.deathParticle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 18;
+  width: var(--size);
+  height: var(--size);
+  background: var(--color);
+  animation: deathParticleFly 0.6s ease-out var(--delay) both;
+}
+
+.deathStarItem {
+  position: absolute;
+  font-size: 16px;
+  pointer-events: none;
+  z-index: 19;
+  animation: deathStarFly 0.8s ease-out forwards;
+}
+
+.dmgFloat {
+  position: absolute;
+  bottom: 38%;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #FF4444;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+  pointer-events: none;
+  z-index: 15;
+  white-space: nowrap;
+  animation: dmgRise 0.6s ease forwards;
+}
+
+.dropItemAnim {
+  position: absolute;
+  bottom: 32%;
+  font-size: 24px;
+  pointer-events: none;
+  z-index: 15;
+  animation: dropFall 2s ease forwards;
+}
+
+.dropNotif {
+  position: absolute;
+  bottom: 13%;
+  left: 50%;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 20;
+  animation: notifPop 2.8s ease forwards;
 }
 
 /* ── Alert bubbles ───────────────────────────────────────────── */
@@ -360,12 +596,16 @@
   animation: barPulse 1s ease-in-out infinite;
 }
 
-/* ── Actions grid (2×2) ──────────────────────────────────────── */
+/* ── Actions grid (3×2) ──────────────────────────────────────── */
 
 .actionsGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 6px;
+}
+
+.chenilBtn {
+  grid-column: 2;
 }
 
 .actionBtn {
@@ -494,3 +734,179 @@
     gap: 8px;
   }
 }
+
+/* ── Chenil overlay ──────────────────────────────────────────── */
+
+.chenilOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 150;
+  display: flex;
+  align-items: flex-end;
+}
+
+.chenilPanel {
+  width: 100%;
+  max-height: 80%;
+  background: rgba(18, 18, 30, 0.97);
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chenilHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+
+.chenilTitle {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+.chenilClose {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 22px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.chenilList {
+  overflow-y: auto;
+  padding: 10px 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chenilCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 10px 12px;
+  transition: border-color 0.2s;
+}
+
+.chenilCardActive {
+  border-color: rgba(100, 200, 255, 0.35);
+  background: rgba(100, 200, 255, 0.06);
+}
+
+.chenilSprite {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.chenilInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.chenilName {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chenilShiny {
+  font-size: 11px;
+}
+
+.chenilLvl {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  color: rgba(255,255,255,0.45);
+  margin: 0;
+}
+
+.chenilXpBar {
+  height: 4px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.chenilXpFill {
+  height: 100%;
+  background: linear-gradient(90deg, #9B59B6, #C39BD3);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.chenilActions {
+  flex-shrink: 0;
+}
+
+.chenilActiveBadge {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(100, 200, 255, 0.8);
+  border: 1px solid rgba(100, 200, 255, 0.3);
+  border-radius: 6px;
+  padding: 3px 7px;
+}
+
+.chenilActivateBtn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.8);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.chenilActivateBtn:hover {
+  background: rgba(255,255,255,0.14);
+}
+
+/* Day mode overrides */
+.day .chenilPanel {
+  background: rgba(240, 245, 255, 0.97);
+  border-top-color: rgba(0,0,0,0.08);
+}
+.day .chenilHeader { border-bottom-color: rgba(0,0,0,0.08); }
+.day .chenilTitle { color: rgba(0,0,0,0.85); }
+.day .chenilClose { color: rgba(0,0,0,0.4); }
+.day .chenilCard { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); }
+.day .chenilCardActive { border-color: rgba(0,100,200,0.3); background: rgba(0,100,200,0.05); }
+.day .chenilName { color: rgba(0,0,0,0.85); }
+.day .chenilLvl { color: rgba(0,0,0,0.45); }
+.day .chenilXpBar { background: rgba(0,0,0,0.1); }
+.day .chenilActiveBadge { color: rgba(0,100,200,0.8); border-color: rgba(0,100,200,0.25); }
+.day .chenilActivateBtn { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.12); color: #1a1a1a; }
+.day .chenilActivateBtn:hover { background: rgba(0,0,0,0.1); }

@@ -213,6 +213,18 @@ function OrbitRing() {
   )
 }
 
+// ── Shiny particle configs — generated once ───────────────────
+function makeShinyParticles() {
+  return Array.from({ length: 30 }, (_, i) => ({
+    id: i,
+    size: 4 + Math.random() * 4,
+    tx: `${Math.round((Math.random() - 0.5) * 400)}px`,
+    ty: `${Math.round((Math.random() - 0.5) * 400)}px`,
+    delay: `${(Math.random() * 0.8).toFixed(2)}s`,
+    dur: `${(1.2 + Math.random() * 0.6).toFixed(2)}s`,
+  }))
+}
+
 // ── Phrases ───────────────────────────────────────────────────
 const PHRASES = [
   "Un aventurier dans l'âme.",
@@ -230,7 +242,9 @@ export default function HatchScreen({ egg, pokemon, isNight, onRestart, onConfir
   const [flashClass, setFlashClass] = useState(s.flashIn)
   const [filterStyle, setFilterStyle] = useState({ filter: 'brightness(0)' })
   const [customName, setCustomName] = useState('')
-  const phrase = useRef(PHRASES[Math.floor(Math.random() * PHRASES.length)]).current
+  const phrase         = useRef(PHRASES[Math.floor(Math.random() * PHRASES.length)]).current
+  const isShiny        = useRef(Math.random() < 0.01).current
+  const shinyParticles = useRef(makeShinyParticles()).current
 
   useEffect(() => {
     let timers = []
@@ -269,14 +283,19 @@ export default function HatchScreen({ egg, pokemon, isNight, onRestart, onConfir
     return () => timers.forEach(clearTimeout)
   }, [])
 
-  const spriteUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`
+  const spriteUrl = isShiny
+    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/${pokemon.id}.png`
+    : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`
 
   return (
     <div className={`${s.page} ${isNight ? s.night : s.day}`}>
 
-      {/* Flash overlay */}
+      {/* Flash overlay — gold if shiny */}
       {(phase === 'flash' || phase === 'silhouette') && (
-        <div className={`${s.flash} ${flashClass}`}/>
+        <div
+          className={`${s.flash} ${flashClass}`}
+          style={isShiny ? { background: 'rgba(255,215,0,0.9)' } : {}}
+        />
       )}
 
       <div className={s.stage}>
@@ -318,11 +337,36 @@ export default function HatchScreen({ egg, pokemon, isNight, onRestart, onConfir
         {/* ── RESULT phase ── */}
         {phase === 'result' && (
           <>
-            <img
-              src={spriteUrl}
-              alt={pokemon.name}
-              className={`${s.sprite} ${s.spriteResult}`}
-            />
+            <div style={{ position: 'relative' }}>
+              <img
+                src={spriteUrl}
+                alt={pokemon.name}
+                className={`${s.sprite} ${s.spriteResult}`}
+                style={isShiny ? { filter: 'drop-shadow(0 0 16px rgba(255,215,0,0.7))' } : {}}
+              />
+              {/* Shiny particle rain */}
+              {isShiny && (
+                <div className={s.shinyParticles}>
+                  {shinyParticles.map(p => (
+                    <div
+                      key={p.id}
+                      className={s.shinyParticle}
+                      style={{
+                        width:  p.size,
+                        height: p.size,
+                        marginLeft: -(p.size / 2),
+                        marginTop:  -(p.size / 2),
+                        '--tx':    p.tx,
+                        '--ty':    p.ty,
+                        '--delay': p.delay,
+                        '--dur':   p.dur,
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            {isShiny && <p className={s.shinyLabel}>✨ SHINY !</p>}
             <p className={s.pokemonName}>{pokemon.name}</p>
             <p className={s.pokemonPhrase}>{phrase}</p>
             <p className={s.nicknameLabel}>Donnez-lui un surnom</p>
@@ -335,7 +379,7 @@ export default function HatchScreen({ egg, pokemon, isNight, onRestart, onConfir
               spellCheck={false}
             />
             <div className={s.ctaWrap}>
-              <button className={s.cta} onClick={() => onConfirm(customName || pokemon.name)}>
+              <button className={s.cta} onClick={() => onConfirm(customName || pokemon.name, isShiny)}>
                 <img src={spriteUrl} alt="" className={s.ctaSprite}/>
                 Go m'occuper de {customName || pokemon.name} →
               </button>

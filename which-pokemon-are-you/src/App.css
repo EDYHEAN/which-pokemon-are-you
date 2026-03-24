@@ -176,7 +176,7 @@
     display: flex;
     height: 100vh;
     overflow: hidden;
-    align-items: center;
+    align-items: stretch;
   }
 
   /* Hide mobile toggle — sidebar has its own */
@@ -306,32 +306,20 @@
   .app-center {
     flex: 1;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
     height: 100vh;
     min-height: 0;
+    overflow-y: auto;
   }
 
   .game-frame {
-    width: 390px;
-    height: min(100vh, 844px);
-    border-radius: 24px;
-    overflow: hidden;
-    box-shadow:
-      0 40px 100px rgba(0, 0, 0, 0.45),
-      0 0 0 1px rgba(255, 255, 255, 0.1);
-    transform: translateZ(0);
-    flex: none;
-    min-height: unset;
-  }
-
-  .is-day .game-frame {
-    box-shadow:
-      0 40px 100px rgba(0, 0, 0, 0.2),
-      0 0 0 1px rgba(0, 0, 0, 0.08);
+    flex: 1;
+    width: 100%;
+    min-height: 0;
   }
 
   .app-center .screen-wrapper {
-    min-height: min(100vh, 844px);
+    flex: 1;
+    min-height: 100vh;
   }
 }

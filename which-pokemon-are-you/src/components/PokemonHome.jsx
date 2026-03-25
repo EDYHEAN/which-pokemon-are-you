@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 import s from './PokemonHome.module.css'
 import { GAME_CONFIG, STORAGE_KEY, POOPS_KEY, freshStats, recalcStats, LEVEL_REWARDS, WILD_DROPS, EVOLUTIONS, addToInventory, loadProgress, saveProgress } from '../config/gameConfig'
 import LevelUpOverlay from './LevelUpOverlay'
@@ -7,6 +7,8 @@ import scene1 from '../assets/scenes/scene1.png'
 import scene2 from '../assets/scenes/scene2.png'
 import scene3 from '../assets/scenes/scene3.png'
 import scene4 from '../assets/scenes/scene4.png'
+import { HAT_CATALOG } from '../config/hatCatalog'
+import BagScreen from './BagScreen'
 
 const scenes = [scene1, scene2, scene3, scene4]
 
@@ -67,6 +69,41 @@ function IconExclaim() {
     <svg width="16" height="16" viewBox="0 0 8 8" fill="currentColor">
       <rect x="3" y="0" width="2" height="5"/>
       <rect x="3" y="6" width="2" height="2"/>
+    </svg>
+  )
+}
+
+function HatSVG({ hat, style, onMouseDown, onTouchStart, facingLeft }) {
+  const flip = facingLeft ? -1 : 1
+  if (hat?.image) {
+    return (
+      <img
+        src={hat.image}
+        alt={hat.name || 'hat'}
+        draggable={false}
+        onMouseDown={onMouseDown}
+        onTouchStart={onTouchStart}
+        style={{
+          width: 56, height: 56, objectFit: 'contain',
+          ...style,
+          transform: `${style?.transform ?? 'translate(-50%, -50%)'} scaleX(${flip})`,
+        }}
+      />
+    )
+  }
+  // Fallback SVG placeholder
+  return (
+    <svg
+      width="38" height="32" viewBox="0 0 48 40"
+      draggable={false}
+      onMouseDown={onMouseDown}
+      onTouchStart={onTouchStart}
+      style={{ filter: 'drop-shadow(0 0 2px white) drop-shadow(0 0 1px white)', ...style }}
+    >
+      <ellipse cx="24" cy="34" rx="22" ry="5" fill="#FF3B30"/>
+      <rect x="10" y="14" width="28" height="20" rx="3" fill="#FF3B30"/>
+      <ellipse cx="24" cy="14" rx="14" ry="8" fill="#FF3B30"/>
+      <ellipse cx="18" cy="12" rx="4" ry="2" fill="rgba(255,255,255,0.4)" transform="rotate(-20 18 12)"/>
     </svg>
   )
 }
@@ -144,7 +181,7 @@ const GENERIC_MESSAGES = [
 ]
 
 // ── Main component ────────────────────────────────────────────
-export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
+export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode = false }) {
   const [stats,        setStats]        = useState(null)
   const [xp,           setXp]           = useState(0)
   const [level,        setLevel]        = useState(1)
@@ -186,14 +223,27 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
     const v = parseInt(localStorage.getItem('poketama_scene'), 10)
     return isNaN(v) || v < 0 || v >= scenes.length ? 0 : v
   })
-  const [equippedHat,    setEquippedHat]    = useState(() => localStorage.getItem('poketama_hat') || null)
+  const [equippedHatId,  setEquippedHatId]  = useState(() => localStorage.getItem('poketama_hat') || null)
+  const equippedHat = equippedHatId ? (HAT_CATALOG[equippedHatId] ?? null) : null
   const [isDragging,     setIsDragging]     = useState(false)
   const [hatPos,         setHatPos]         = useState({ x: 0, y: 0 })
   const [isPlacementMode, setIsPlacementMode] = useState(false)
   const [dragCurrentPos, setDragCurrentPos] = useState({ x: 0, y: 0 })
 
-  const spriteRef = useRef(null)
-  const zoneRef   = useRef(null)
+  const [bagOpen,        setBagOpen]        = useState(false)
+  const [bagClosing,     setBagClosing]     = useState(false)
+  const [bagNotif,       setBagNotif]       = useState(false)
+  const [hatRenderPos,   setHatRenderPos]   = useState({ x: 0, y: 0 })
+
+  const [drawerMaxHeight, setDrawerMaxHeight] = useState('50%')
+
+  const spriteRef         = useRef(null)
+  const zoneRef           = useRef(null)
+  const dashboardRef      = useRef(null)
+  const dragPosRef        = useRef({ x: 0, y: 0 })
+  const isPlacementRef    = useRef(false)
+  const rafRef            = useRef(null)
+  const statsLastUpdated  = useRef(Date.now())
 
   // ── Init ──────────────────────────────────────────────────
   useEffect(() => {
@@ -251,11 +301,16 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
   // ── Scene / hat event listeners ──────────────────────────────
   useEffect(() => {
     const onScene = (e) => setSceneIndex(e.detail.sceneId)
-    const onHat   = (e) => setEquippedHat(e.detail.hatId)
+    const onHat   = (e) => setEquippedHatId(e.detail.hatId)
     const onReposition = () => {
+      isPlacementRef.current = true
       setIsPlacementMode(true)
       const zone = zoneRef.current?.getBoundingClientRect()
-      if (zone) setDragCurrentPos({ x: zone.width / 2, y: zone.height / 2 })
+      if (zone) {
+        const pos = { x: zone.width / 2, y: zone.height / 2 }
+        dragPosRef.current = pos
+        setDragCurrentPos(pos)
+      }
     }
     window.addEventListener('poketama-scene-change',   onScene)
     window.addEventListener('poketama-hat-change',     onHat)
@@ -271,6 +326,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
   useEffect(() => {
     if (!equippedHat) {
       setHatPos({ x: 0, y: 0 })
+      isPlacementRef.current = false
       setIsPlacementMode(false)
       return
     }
@@ -278,33 +334,43 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
     if (saved) {
       try { setHatPos(JSON.parse(saved)) } catch {}
     } else {
+      isPlacementRef.current = true
       setIsPlacementMode(true)
       const zone = zoneRef.current?.getBoundingClientRect()
-      if (zone) setDragCurrentPos({ x: zone.width / 2, y: zone.height / 2 })
+      if (zone) {
+        const pos = { x: zone.width / 2, y: zone.height / 2 }
+        dragPosRef.current = pos
+        setDragCurrentPos(pos)
+      }
     }
-  }, [equippedHat, pokemon.id])
+  }, [equippedHatId, pokemon.id])
 
   // ── Desktop drag ──────────────────────────────────────────────
   useEffect(() => {
     if (!isDragging) return
 
+    const pokemonId = pokemon.id
+
     const handleMouseMove = (e) => {
       const zone = zoneRef.current?.getBoundingClientRect()
       if (!zone) return
-      setDragCurrentPos({ x: e.clientX - zone.left, y: e.clientY - zone.top })
+      const pos = { x: e.clientX - zone.left, y: e.clientY - zone.top }
+      dragPosRef.current = pos
+      setDragCurrentPos(pos)
     }
 
-    const handleMouseUp = (e) => {
+    const handleMouseUp = () => {
       setIsDragging(false)
-      if (!isPlacementMode) return
+      if (!isPlacementRef.current) return
       const sprite = spriteRef.current?.getBoundingClientRect()
       const zone   = zoneRef.current?.getBoundingClientRect()
       if (!sprite || !zone) return
       const spriteCenterX = sprite.left - zone.left + sprite.width  / 2
       const spriteCenterY = sprite.top  - zone.top  + sprite.height / 2
-      const offset = { x: dragCurrentPos.x - spriteCenterX, y: dragCurrentPos.y - spriteCenterY }
+      const offset = { x: dragPosRef.current.x - spriteCenterX, y: dragPosRef.current.y - spriteCenterY }
       setHatPos(offset)
-      localStorage.setItem(`poketama_hat_offset_${pokemon.id}`, JSON.stringify(offset))
+      localStorage.setItem(`poketama_hat_offset_${pokemonId}`, JSON.stringify(offset))
+      isPlacementRef.current = false
       setIsPlacementMode(false)
     }
 
@@ -314,31 +380,79 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup',   handleMouseUp)
     }
-  }, [isDragging, dragCurrentPos, isPlacementMode, pokemon.id])
+  }, [isDragging])
+
+  // ── Hat initial position when placement mode activates ────────
+  useLayoutEffect(() => {
+    if (!isPlacementMode) return
+    const zone = zoneRef.current?.getBoundingClientRect()
+    if (!zone || zone.width === 0) return
+    const pos = { x: zone.width / 2, y: zone.height / 2 }
+    dragPosRef.current = pos
+    setDragCurrentPos(pos)
+  }, [isPlacementMode])
+
+  // ── Hat RAF loop — real-time tracking of sprite position ──────
+  useEffect(() => {
+    if (isPlacementMode || !equippedHat) {
+      cancelAnimationFrame(rafRef.current)
+      return
+    }
+    function tick() {
+      const sprite = spriteRef.current?.getBoundingClientRect()
+      const zone   = zoneRef.current?.getBoundingClientRect()
+      if (sprite && zone) {
+        const spriteCenterX = sprite.left - zone.left + sprite.width  / 2
+        const spriteCenterY = sprite.top  - zone.top  + sprite.height / 2
+        const effectiveX    = facingLeft ? -hatPos.x : hatPos.x
+        setHatRenderPos({ x: spriteCenterX + effectiveX, y: spriteCenterY + hatPos.y })
+      }
+      rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => { cancelAnimationFrame(rafRef.current); rafRef.current = null }
+  }, [isPlacementMode, equippedHat, hatPos, facingLeft])
+
+  // ── Drawer height = dashboard height ─────────────────────────
+  useEffect(() => {
+    const updateHeight = () => {
+      if (dashboardRef.current) {
+        setDrawerMaxHeight(dashboardRef.current.offsetHeight + 'px')
+      }
+    }
+    updateHeight()
+    window.addEventListener('resize', updateHeight)
+    return () => window.removeEventListener('resize', updateHeight)
+  }, [])
 
   // ── Mobile drag ───────────────────────────────────────────────
   useEffect(() => {
     if (!isDragging) return
+
+    const pokemonId = pokemon.id
 
     const handleTouchMove = (e) => {
       e.preventDefault()
       const touch = e.touches[0]
       const zone  = zoneRef.current?.getBoundingClientRect()
       if (!zone) return
-      setDragCurrentPos({ x: touch.clientX - zone.left, y: touch.clientY - zone.top })
+      const pos = { x: touch.clientX - zone.left, y: touch.clientY - zone.top }
+      dragPosRef.current = pos
+      setDragCurrentPos(pos)
     }
 
-    const handleTouchEnd = (e) => {
+    const handleTouchEnd = () => {
       setIsDragging(false)
-      if (!isPlacementMode) return
+      if (!isPlacementRef.current) return
       const sprite = spriteRef.current?.getBoundingClientRect()
       const zone   = zoneRef.current?.getBoundingClientRect()
       if (!sprite || !zone) return
       const spriteCenterX = sprite.left - zone.left + sprite.width  / 2
       const spriteCenterY = sprite.top  - zone.top  + sprite.height / 2
-      const offset = { x: dragCurrentPos.x - spriteCenterX, y: dragCurrentPos.y - spriteCenterY }
+      const offset = { x: dragPosRef.current.x - spriteCenterX, y: dragPosRef.current.y - spriteCenterY }
       setHatPos(offset)
-      localStorage.setItem(`poketama_hat_offset_${pokemon.id}`, JSON.stringify(offset))
+      localStorage.setItem(`poketama_hat_offset_${pokemonId}`, JSON.stringify(offset))
+      isPlacementRef.current = false
       setIsPlacementMode(false)
     }
 
@@ -348,18 +462,27 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
       window.removeEventListener('touchmove', handleTouchMove)
       window.removeEventListener('touchend',  handleTouchEnd)
     }
-  }, [isDragging, dragCurrentPos, isPlacementMode, pokemon.id])
+  }, [isDragging])
 
-  // ── Periodic save every 60s + poop spawn check ──────────────
+  // ── Stats ticker every 60s — decay + save + poop check ───────
   useEffect(() => {
     if (!stats) return
+    statsLastUpdated.current = Date.now()
     const interval = setInterval(() => {
-      writeSave(pokemon, statsRef.current, xpRef.current, levelRef.current)
+      const now     = Date.now()
+      const elapsed = now - statsLastUpdated.current
+      statsLastUpdated.current = now
 
-      // Spawn a poop if toilet is empty and under the cap
-      if (statsRef.current?.toilet === 0 && poopsRef.current.length < 4) {
+      const next = recalcStats(statsRef.current, elapsed)
+      console.log('[stats tick] elapsed:', elapsed, 'ms |', next)
+      statsRef.current = next
+      setStats(next)
+      writeSave(pokemon, next, xpRef.current, levelRef.current)
+
+      // Spawn poop if toilet empty and under cap
+      if (next.toilet === 0 && poopsRef.current.length < 4) {
         if (Math.random() < 0.5) {
-          const newPoop = { id: Date.now(), x: 10 + Math.random() * 70 }
+          const newPoop  = { id: Date.now(), x: 10 + Math.random() * 70 }
           const newPoops = [...poopsRef.current, newPoop]
           setPoops(newPoops)
           poopsRef.current = newPoops
@@ -382,6 +505,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
           if (save.level !== undefined && save.level !== levelRef.current) {
             const newLevel = save.level
             const reward   = LEVEL_REWARDS[newLevel] || null
+            if (reward) setBagNotif(true)
             levelRef.current = newLevel
             setLevel(newLevel)
             setLevelUpData({ level: newLevel, reward })
@@ -444,7 +568,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
       timeout = setTimeout(() => {
         if (!wildRef.current) {
           const pick = WILD_POOL[Math.floor(Math.random() * WILD_POOL.length)]
-          const newWild = { ...pick, hp: 10, maxHp: 10 }
+          const newWild = { ...pick, hp: 10, maxHp: 10, isInFront: Math.random() > 0.5 }
           setWildPokemon(newWild)
           wildRef.current = newWild
           drawFaviconWithBadge(true)
@@ -521,6 +645,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
         const reward = LEVEL_REWARDS[newLevel] || null
         if (reward) {
           addToInventory(reward.id, reward.quantity)
+          setBagNotif(true)
         }
         setLevelUpData({ level: newLevel, reward: reward || null })
 
@@ -568,7 +693,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
         xpRef.current = 0
         setXp(0)
         const reward = LEVEL_REWARDS[newLevel] || null
-        if (reward) addToInventory(reward.id, reward.quantity)
+        if (reward) { addToInventory(reward.id, reward.quantity); setBagNotif(true) }
         setLevelUpData({ level: newLevel, reward: reward || null })
 
         const prog = loadProgress()
@@ -687,7 +812,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
           xpRef.current = 0
           setXp(0)
           const reward = LEVEL_REWARDS[newLevel] || null
-          if (reward) addToInventory(reward.id, reward.quantity)
+          if (reward) { addToInventory(reward.id, reward.quantity); setBagNotif(true) }
           setLevelUpData({ level: newLevel, reward: reward || null })
 
           const prog = loadProgress()
@@ -797,33 +922,6 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
   const mode  = isNight ? s.night : s.day
 
   // ── Hat style — computed each render from live DOM rects ──────
-  const getHatStyle = () => {
-    if (isPlacementMode) {
-      return {
-        position: 'absolute',
-        left: dragCurrentPos.x,
-        top:  dragCurrentPos.y,
-        transform: 'translate(-50%, -50%)',
-        zIndex: 200,
-        cursor: isDragging ? 'grabbing' : 'grab',
-        filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))',
-        animation: isDragging ? 'none' : undefined,
-      }
-    }
-    const sprite = spriteRef.current?.getBoundingClientRect()
-    const zone   = zoneRef.current?.getBoundingClientRect()
-    if (!sprite || !zone) return { display: 'none' }
-    const spriteCenterX = sprite.left - zone.left + sprite.width  / 2
-    const spriteCenterY = sprite.top  - zone.top  + sprite.height / 2
-    return {
-      position: 'absolute',
-      left: spriteCenterX + hatPos.x,
-      top:  spriteCenterY + hatPos.y,
-      transform: 'translate(-50%, -50%)',
-      zIndex: 10,
-      pointerEvents: 'none',
-    }
-  }
 
   return (
     <div className={`${s.page} ${mode}`}>
@@ -838,6 +936,23 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
           backgroundPosition: 'center bottom',
         }}
       >
+        {isPlacementMode && equippedHat && (
+          <HatSVG
+            style={{
+              position: 'absolute',
+              left: `${dragCurrentPos.x}px`,
+              top: `${dragCurrentPos.y}px`,
+              transform: 'translate(-50%, -50%)',
+              zIndex: 9999,
+              cursor: isDragging ? 'grabbing' : 'grab',
+              pointerEvents: 'all',
+              userSelect: 'none',
+              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))',
+            }}
+            onMouseDown={(e) => { e.preventDefault(); setIsDragging(true) }}
+            onTouchStart={(e) => { e.preventDefault(); setIsDragging(true) }}
+          />
+        )}
 
         {/* Poops */}
         {poops.map(poop => (
@@ -862,6 +977,12 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
             ref={wildWrapRef}
             className={[s.wildWrap, wildDying ? s.wildDying : ''].filter(Boolean).join(' ')}
             onClick={handleWildClick}
+            style={{
+              zIndex: wildPokemon.isInFront ? 5 : 1,
+              transform: `scale(${wildPokemon.isInFront ? 1.1 : 0.85})`,
+              opacity: wildPokemon.isInFront ? 1 : 0.8,
+              filter: wildPokemon.isInFront ? 'none' : 'brightness(0.85)',
+            }}
           >
             <div className={s.wildHpBar}>
               <div className={s.wildHpFill} style={{ width: `${(wildPokemon.hp / wildPokemon.maxHp) * 100}%` }}/>
@@ -957,8 +1078,20 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
           />
         </div>
 
-        {/* ── Hat placement overlay (pointer-events: none — window handles drag) ── */}
-        {isPlacementMode && (
+        {/* ── Hat : mode placement (overlay + chapeau draggable) ── */}
+        {/* ── Badge GOD mode ── */}
+        {godMode && (
+          <div style={{
+            position: 'absolute', top: 8, left: 8, zIndex: 60,
+            background: '#FF3B30', color: 'white',
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: '9px', fontWeight: '700', letterSpacing: '0.12em',
+            padding: '2px 6px', borderRadius: '4px',
+            pointerEvents: 'none',
+          }}>GOD</div>
+        )}
+
+        {isPlacementMode && equippedHat && <>
           <div style={{
             position: 'absolute', inset: 0,
             background: 'rgba(0,0,0,0.45)',
@@ -968,38 +1101,72 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
             pointerEvents: 'none',
           }}>
             <div style={{
-              background: 'rgba(255,255,255,0.92)',
-              borderRadius: '100px',
-              padding: '8px 18px',
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: '13px',
-              fontWeight: '300',
-              color: '#1a1a1a',
+              background: 'rgba(255,255,255,0.92)', borderRadius: '100px',
+              padding: '8px 18px', fontFamily: "'DM Sans', sans-serif",
+              fontSize: '13px', fontWeight: '300', color: '#1a1a1a',
               boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
             }}>
               Placez le chapeau sur la tête de votre Pokémon
             </div>
           </div>
+          <HatSVG
+            hat={equippedHat}
+            onMouseDown={(e) => { e.preventDefault(); setIsDragging(true) }}
+            onTouchStart={(e) => { e.preventDefault(); setIsDragging(true) }}
+            style={{
+              position: 'absolute',
+              left: `${dragCurrentPos.x}px`,
+              top:  `${dragCurrentPos.y}px`,
+              transform: 'translate(-50%, -50%)',
+              zIndex: 999,
+              cursor: isDragging ? 'grabbing' : 'grab',
+              pointerEvents: 'all',
+              userSelect: 'none',
+            }}
+          />
+        </>}
+
+        {/* ── Hat : mode normal — suivi temps réel via RAF ── */}
+        {!isPlacementMode && equippedHat && (
+          <HatSVG hat={equippedHat} facingLeft={facingLeft} style={{
+            position: 'absolute',
+            left: hatRenderPos.x,
+            top:  hatRenderPos.y,
+            transform: 'translate(-50%, -50%)',
+            zIndex: 10,
+            pointerEvents: 'none',
+          }}/>
         )}
 
-        {/* ── Hat element — absolute in habitat ── */}
-        {equippedHat && (
-          <svg
-            width="40" height="26" viewBox="0 0 28 18"
-            style={getHatStyle()}
-            onMouseDown={isPlacementMode ? (e) => { e.preventDefault(); setIsDragging(true) } : undefined}
-            onTouchStart={isPlacementMode ? (e) => { e.preventDefault(); setIsDragging(true) } : undefined}
-            className={isPlacementMode && !isDragging ? s.hatDraggable : undefined}
-          >
-            <rect x="5" y="0" width="18" height="12" rx="3" fill="#2a2a2a"/>
-            <rect x="0" y="11" width="28" height="5" rx="2" fill="#1a1a1a"/>
-          </svg>
-        )}
+        {/* ── Bouton sac ── */}
+        <button
+          onClick={() => { setBagOpen(true); setBagClosing(false); setBagNotif(false) }}
+          style={{
+            position: 'absolute', top: '12px', right: '12px', zIndex: 50,
+            width: '38px', height: '38px', borderRadius: '50%',
+            background: 'rgba(255,255,255,0.2)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255,255,255,0.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '18px', cursor: 'pointer', padding: 0,
+          }}
+        >
+          🎒
+          {bagNotif && (
+            <span style={{
+              position: 'absolute', top: 3, right: 3,
+              width: 8, height: 8, borderRadius: '50%',
+              background: '#FF3B30',
+              border: '1.5px solid rgba(0,0,0,0.3)',
+              pointerEvents: 'none',
+            }}/>
+          )}
+        </button>
 
       </div>
 
       {/* ── Dashboard ── */}
-      <div className={s.dashboard}>
+      <div ref={dashboardRef} className={s.dashboard}>
 
         {/* Header */}
         <div className={s.dashHeader}>
@@ -1102,6 +1269,25 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
           reward={levelUpData.reward}
           onClose={() => setLevelUpData(null)}
         />
+      )}
+
+      {/* ── Drawer sac ── */}
+      {bagOpen && (
+        <div
+          className={`${s.bagDrawer} ${bagClosing ? s.bagDrawerClosing : ''}`}
+          style={{ height: drawerMaxHeight, top: 'auto' }}
+        >
+          <BagScreen
+            pokemon={pokemon}
+            isNight={isNight}
+            godMode={godMode}
+            embedded
+            onClose={() => {
+              setBagClosing(true)
+              setTimeout(() => { setBagOpen(false); setBagClosing(false) }, 350)
+            }}
+          />
+        </div>
       )}
 
       {showChenil && chenilData && (

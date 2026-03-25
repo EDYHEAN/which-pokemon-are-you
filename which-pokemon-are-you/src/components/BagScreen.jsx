@@ -4,6 +4,7 @@ import {
   LEVEL_REWARDS, WILD_DROPS, EVOLUTION_STONES, EVOLUTIONS, STORAGE_KEY,
   loadInventory, saveInventory, applyItemEffect, loadProgress,
 } from '../config/gameConfig'
+import { HAT_CATALOG } from '../config/hatCatalog'
 import scene1 from '../assets/scenes/scene1.png'
 import scene2 from '../assets/scenes/scene2.png'
 import scene3 from '../assets/scenes/scene3.png'
@@ -21,24 +22,7 @@ const SCENES = [
   { id: 7, name: 'Cité',    image: null,   unlocked: false, requiredLevel: 60 },
 ]
 
-// ── Hat data ───────────────────────────────────────────────────
-const HATS = [
-  { id: 'hat_basic', name: 'Chapeau Basique', unlocked: true  },
-  { id: 'hat_2',     name: 'Chapeau #2',      unlocked: false, requiredLevel: 5  },
-  { id: 'hat_3',     name: 'Chapeau #3',      unlocked: false, requiredLevel: 8  },
-  { id: 'hat_4',     name: 'Chapeau #4',      unlocked: false, requiredLevel: 12 },
-  { id: 'hat_5',     name: 'Chapeau #5',      unlocked: false, requiredLevel: 15 },
-  { id: 'hat_6',     name: 'Chapeau #6',      unlocked: false, requiredLevel: 20 },
-]
-
-function HatIcon({ size = 32 }) {
-  return (
-    <svg width={size} height={Math.round(size * 0.7)} viewBox="0 0 32 22" fill="currentColor">
-      <rect x="6" y="0" width="20" height="14" rx="3"/>
-      <rect x="0" y="13" width="32" height="6" rx="2"/>
-    </svg>
-  )
-}
+const HATS = Object.values(HAT_CATALOG)
 
 function LockIcon() {
   return (
@@ -87,7 +71,7 @@ function getStoneCompatibles(stoneId) {
 }
 
 // ── Main component ─────────────────────────────────────────────
-export default function BagScreen({ pokemon, isNight }) {
+export default function BagScreen({ pokemon, isNight, onClose, embedded, godMode = false }) {
   const [tab,    setTab]    = useState('items')
   const [items,  setItems]  = useState([])
   const [level,  setLevel]  = useState(1)
@@ -168,16 +152,22 @@ export default function BagScreen({ pokemon, isNight }) {
   // Split inventory
   const regularAvailable = items.filter(i => i.quantity > 0 && !STONE_IDS.has(i.id))
   const stonesAvailable  = items.filter(i => i.quantity > 0 &&  STONE_IDS.has(i.id))
-  const locked = Object.entries(LEVEL_REWARDS)
+  const locked = godMode ? [] : Object.entries(LEVEL_REWARDS)
     .filter(([lvl]) => parseInt(lvl) > level)
     .map(([lvl, def]) => ({ ...def, requiredLevel: parseInt(lvl) }))
 
   const mode = isNight ? s.night : s.day
 
   return (
-    <div className={`${s.page} ${mode}`}>
+    <div className={`${s.page} ${mode} ${embedded ? s.embedded : ''}`}>
       <div className={s.header}>
         <p className={s.title}>Bag</p>
+        {onClose && (
+          <button onClick={onClose} style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: 'rgba(255,255,255,0.6)', fontSize: '22px', lineHeight: 1, padding: '4px 8px',
+          }}>×</button>
+        )}
       </div>
 
       {/* ── Internal tabs ── */}
@@ -288,13 +278,14 @@ export default function BagScreen({ pokemon, isNight }) {
             <p className={s.sectionLabel}>Décors disponibles</p>
             <div className={s.sceneGrid}>
               {SCENES.map(scene => {
-                const isActive = activeScene === scene.id
+                const isActive  = activeScene === scene.id
+                const unlocked  = godMode || scene.unlocked || (scene.requiredLevel && level >= scene.requiredLevel)
                 return (
                   <button
                     key={scene.id}
-                    className={[s.sceneCard, isActive ? s.sceneActive : '', !scene.unlocked ? s.sceneLocked : ''].filter(Boolean).join(' ')}
-                    onClick={scene.unlocked ? () => handleSceneSelect(scene.id) : undefined}
-                    disabled={!scene.unlocked}
+                    className={[s.sceneCard, isActive ? s.sceneActive : '', !unlocked ? s.sceneLocked : ''].filter(Boolean).join(' ')}
+                    onClick={unlocked ? () => handleSceneSelect(scene.id) : undefined}
+                    disabled={!unlocked}
                   >
                     <div className={s.sceneThumbnailWrap}>
                       {scene.image
@@ -309,7 +300,7 @@ export default function BagScreen({ pokemon, isNight }) {
                           </svg>
                         </div>
                       )}
-                      {!scene.unlocked && (
+                      {!unlocked && (
                         <div className={s.sceneLockOverlay}>
                           <LockIcon/>
                           <span className={s.sceneLockLabel}>Niv. {scene.requiredLevel}</span>
@@ -338,24 +329,33 @@ export default function BagScreen({ pokemon, isNight }) {
             )}
             <div className={s.hatGrid}>
               {HATS.map(hat => {
-                const isActive = activeHat === hat.id
+                const isActive  = activeHat === hat.id
+                const unlocked  = godMode || level >= hat.requiredLevel
                 return (
                   <button
                     key={hat.id}
-                    className={[s.hatCard, isActive ? s.hatActive : '', !hat.unlocked ? s.hatLocked : ''].filter(Boolean).join(' ')}
-                    onClick={hat.unlocked ? () => handleHatSelect(hat.id) : undefined}
-                    disabled={!hat.unlocked}
+                    className={[s.hatCard, isActive ? s.hatActive : '', !unlocked ? s.hatLocked : ''].filter(Boolean).join(' ')}
+                    onClick={unlocked ? () => handleHatSelect(hat.id) : undefined}
+                    disabled={!unlocked}
                   >
                     <div className={s.hatIconWrap}>
-                      <HatIcon size={28}/>
-                      {!hat.unlocked && (
+                      <img
+                        src={hat.image}
+                        alt={hat.name}
+                        draggable={false}
+                        style={{
+                          width: 64, height: 64, objectFit: 'contain',
+                          filter: unlocked ? 'none' : 'grayscale(1) brightness(0.5)',
+                        }}
+                      />
+                      {!unlocked && (
                         <div className={s.hatLockOverlay}>
                           <LockIcon/>
                         </div>
                       )}
                     </div>
                     <span className={s.hatName}>{hat.name}</span>
-                    {!hat.unlocked && (
+                    {!unlocked && (
                       <span className={s.hatLockLabel}>Niv. {hat.requiredLevel}</span>
                     )}
                   </button>

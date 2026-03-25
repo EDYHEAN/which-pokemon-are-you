@@ -4,20 +4,24 @@ import EggSelector from './components/EggSelector'
 import HatchScreen from './components/HatchScreen'
 import PokemonHome from './components/PokemonHome'
 import TabBar from './components/TabBar'
-import BagScreen from './components/BagScreen'
 import DexScreen from './components/DexScreen'
 import AccountScreen from './components/AccountScreen'
 import { addToDex, STORAGE_KEY, INVENTORY_KEY, DEX_KEY, PROGRESS_KEY, loadProgress, saveProgress } from './config/gameConfig'
 import EvolutionOverlay from './components/EvolutionOverlay'
 import './App.css'
 
-function PokeballIcon() {
+function PikachuIcon() {
   return (
-    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-      <circle cx="16" cy="16" r="15" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M1 16h30" stroke="currentColor" strokeWidth="1.5"/>
-      <circle cx="16" cy="16" r="5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-      <circle cx="16" cy="16" r="2.5" fill="currentColor"/>
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none"
+         stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      <circle cx="14" cy="15" r="9"/>
+      <path d="M7 8 L5 2 L10 6"/>
+      <path d="M21 8 L23 2 L18 6"/>
+      <circle cx="11" cy="14" r="1.2" fill="currentColor" stroke="none"/>
+      <circle cx="17" cy="14" r="1.2" fill="currentColor" stroke="none"/>
+      <circle cx="9" cy="17" r="1.8" strokeWidth="1"/>
+      <circle cx="19" cy="17" r="1.8" strokeWidth="1"/>
+      <path d="M11.5 19 Q14 21 16.5 19"/>
     </svg>
   )
 }
@@ -61,7 +65,6 @@ function SideAccountIcon() {
 
 const SIDEBAR_TABS = [
   { id: 'home',    label: 'Accueil', Icon: SideHomeIcon    },
-  { id: 'bag',     label: 'Sac',     Icon: SideBagIcon     },
   { id: 'dex',     label: 'Pokédex', Icon: SideDexIcon     },
   { id: 'account', label: 'Profil',  Icon: SideAccountIcon },
 ]
@@ -124,7 +127,7 @@ export default function App() {
   const [hatchesAvailable, setHatchesAvailable] = useState(() => computeHatchesAvailable())
   const [pokemonSwitchKey, setPokemonSwitchKey] = useState(0)
   const [evolutionData, setEvolutionData] = useState(null) // { oldId, oldName, newId, newName, isShiny }
-  const [newItemUnlocked, setNewItemUnlocked] = useState(false)
+  const [godMode, setGodMode] = useState(() => localStorage.getItem('poketama_godmode') === 'true')
 
   const rehatchRef = useRef(false)
 
@@ -147,10 +150,7 @@ export default function App() {
 
   // Listen for level-up events dispatched by PokemonHome
   useEffect(() => {
-    const handler = () => {
-      setHatchesAvailable(computeHatchesAvailable())
-      setNewItemUnlocked(true)
-    }
+    const handler = () => setHatchesAvailable(computeHatchesAvailable())
     window.addEventListener('poketama-level-up', handler)
     return () => window.removeEventListener('poketama-level-up', handler)
   }, [])
@@ -258,7 +258,7 @@ export default function App() {
       {/* Desktop sidebar — only on home screen */}
       {showNav && <aside className={`app-sidebar ${mode}`}>
         <div className="sidebar-logo">
-          <PokeballIcon/>
+          <PikachuIcon/>
         </div>
         <nav className="sidebar-nav">
           {SIDEBAR_TABS.map(({ id, label, Icon }) => (
@@ -269,28 +269,10 @@ export default function App() {
                 activeTab === id && screen === 'home' ? 'active' : '',
                 screen !== 'home' ? 'sidebar-tab-disabled' : '',
               ].filter(Boolean).join(' ')}
-              onClick={() => {
-                if (screen !== 'home') return
-                setActiveTab(id)
-                if (id === 'bag') setNewItemUnlocked(false)
-              }}
+              onClick={() => { if (screen !== 'home') return; setActiveTab(id) }}
               title={label}
-              style={{ position: 'relative' }}
             >
               <Icon/>
-              {id === 'bag' && newItemUnlocked && (
-                <span style={{
-                  position: 'absolute',
-                  top: 6,
-                  right: 6,
-                  width: 8,
-                  height: 8,
-                  background: '#FF3B30',
-                  borderRadius: '50%',
-                  border: `1.5px solid ${isNight ? '#1a1a2e' : '#F7F4EF'}`,
-                  pointerEvents: 'none',
-                }}/>
-              )}
             </button>
           ))}
         </nav>
@@ -306,6 +288,17 @@ export default function App() {
               )}
             </button>
         </div>
+        <button
+          className={`sidebar-god ${godMode ? 'sidebar-god-active' : ''}`}
+          onClick={() => {
+            const next = !godMode
+            setGodMode(next)
+            localStorage.setItem('poketama_godmode', String(next))
+          }}
+          title="God Mode"
+        >
+          ⚡
+        </button>
         <button
           className="sidebar-toggle"
           onClick={() => setIsNight(n => !n)}
@@ -323,8 +316,7 @@ export default function App() {
           <div className={screenCls}>
             {screen === 'home' ? (
               <>
-                {activeTab === 'home'    && <PokemonHome key={pokemonSwitchKey} pokemon={hatchData.pokemon} isNight={isNight} onSwitchPokemon={handleSwitchPokemon}/>}
-                {activeTab === 'bag'     && <BagScreen pokemon={hatchData.pokemon} isNight={isNight}/>}
+                {activeTab === 'home'    && <PokemonHome key={pokemonSwitchKey} pokemon={hatchData.pokemon} isNight={isNight} onSwitchPokemon={handleSwitchPokemon} godMode={godMode}/>}
                 {activeTab === 'dex'     && <DexScreen isNight={isNight}/>}
                 {activeTab === 'account' && <AccountScreen pokemon={hatchData.pokemon} isNight={isNight} onReset={handleReset}/>}
                 <TabBar
@@ -333,8 +325,6 @@ export default function App() {
                   isNight={isNight}
                   hatchesAvailable={hatchesAvailable}
                   onEggClick={handleEggButton}
-                  newItemUnlocked={newItemUnlocked}
-                  onBagOpen={() => setNewItemUnlocked(false)}
                 />
               </>
             ) : screen === 'hatching' ? (

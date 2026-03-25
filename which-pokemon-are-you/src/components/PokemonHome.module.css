@@ -251,6 +251,36 @@
   to   { opacity: 1; }
 }
 
+@keyframes bagSlideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@keyframes bagSlideDown {
+  from { transform: translateY(0); }
+  to   { transform: translateY(100%); }
+}
+
+.bagDrawer {
+  position: absolute;
+  top: 15%;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(10,10,20,0.96);
+  backdrop-filter: blur(24px);
+  border-radius: 20px 20px 0 0;
+  z-index: 200;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: bagSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.bagDrawerClosing {
+  animation: bagSlideDown 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
 .hatOverlay {
   position: absolute;
   inset: 0;

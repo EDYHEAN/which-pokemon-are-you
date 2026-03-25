@@ -53,7 +53,6 @@ function EggTabIcon() {
 
 const TABS_LEFT  = [
   { id: 'home', label: 'Home', Icon: HomeIcon },
-  { id: 'bag',  label: 'Bag',  Icon: BagIcon  },
   { id: 'dex',  label: 'Dex',  Icon: DexIcon  },
 ]
 
@@ -61,25 +60,18 @@ const TABS_RIGHT = [
   { id: 'account', label: 'Moi', Icon: AccountIcon },
 ]
 
-export default function TabBar({ activeTab, setActiveTab, isNight, hatchesAvailable = 0, onEggClick, newItemUnlocked = false, onBagOpen }) {
+export default function TabBar({ activeTab, setActiveTab, isNight, hatchesAvailable = 0, onEggClick }) {
   const canHatch = hatchesAvailable > 0
 
   function renderTab({ id, label, Icon }) {
     const active = activeTab === id
-    const showBagBadge = id === 'bag' && newItemUnlocked
     return (
       <button
         key={id}
         className={`${s.tab} ${active ? s.active : ''}`}
-        onClick={() => {
-          setActiveTab(id)
-          if (id === 'bag') onBagOpen?.()
-        }}
+        onClick={() => setActiveTab(id)}
       >
-        <div className={s.iconWrap}>
-          <Icon/>
-          {showBagBadge && <span className={s.itemBadge}/>}
-        </div>
+        <div className={s.iconWrap}><Icon/></div>
         <span className={s.label}>{label}</span>
         {active && <span className={s.dot}/>}
       </button>

@@ -1,62 +1,105 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import s from './EggSelector.module.css'
+import eggFlame   from '../assets/eggs/egg-flame.png'
+import eggOcean   from '../assets/eggs/egg-ocean.png'
+import eggForest  from '../assets/eggs/egg-forest.png'
+import eggThunder from '../assets/eggs/egg-thunder.png'
+import eggMoon    from '../assets/eggs/egg-moon.png'
+import eggShadow  from '../assets/eggs/egg-shadow.png'
+import eggCrystal from '../assets/eggs/egg-crystal.png'
+import eggWild    from '../assets/eggs/egg-wild.png'
+import eggMystic  from '../assets/eggs/egg-mystic.png'
+import eggMystery from '../assets/eggs/egg-mystery.png'
 
 // ── Egg data ──────────────────────────────────────────────────
 const eggs = [
   {
-    id: 'flame', name: 'Œuf Flamme', hint: 'Feu & passion',
-    color1: '#FF4500', color2: '#FF8C00', pattern: 'flames',
+    id: 'flame', name: 'Œuf Flamme', hint: 'Feu & passion', image: eggFlame,
     pool: [{ id: 4, name: 'Salamèche' }, { id: 58, name: 'Caninos' }, { id: 77, name: 'Ponyta' }],
   },
   {
-    id: 'ocean', name: 'Œuf Océan', hint: 'Eau & sérénité',
-    color1: '#1E90FF', color2: '#00CED1', pattern: 'waves',
+    id: 'ocean', name: 'Œuf Océan', hint: 'Eau & sérénité', image: eggOcean,
     pool: [{ id: 7, name: 'Carapuce' }, { id: 54, name: 'Psykokwak' }, { id: 116, name: 'Hypotrempe' }],
   },
   {
-    id: 'forest', name: 'Œuf Forêt', hint: 'Nature & sagesse',
-    color1: '#228B22', color2: '#90EE90', pattern: 'dots',
+    id: 'forest', name: 'Œuf Forêt', hint: 'Nature & sagesse', image: eggForest,
     pool: [{ id: 1, name: 'Bulbizarre' }, { id: 102, name: 'Noeunoeuf' }],
   },
   {
-    id: 'thunder', name: 'Œuf Foudre', hint: 'Énergie & vitesse',
-    color1: '#FFD700', color2: '#FFF44F', pattern: 'zigzag',
+    id: 'thunder', name: 'Œuf Foudre', hint: 'Énergie & vitesse', image: eggThunder,
     pool: [{ id: 25, name: 'Pikachu' }, { id: 81, name: 'Magnéti' }],
   },
   {
-    id: 'moon', name: 'Œuf Lune', hint: 'Douceur & mystère',
-    color1: '#FFB7C5', color2: '#E6E6FA', pattern: 'stars',
+    id: 'moon', name: 'Œuf Lune', hint: 'Douceur & mystère', image: eggMoon,
     pool: [{ id: 35, name: 'Mélofée' }, { id: 39, name: 'Rondoudou' }],
   },
   {
-    id: 'shadow', name: 'Œuf Ombre', hint: 'Obscurité & secret',
-    color1: '#2D1B69', color2: '#6A0DAD', pattern: 'mist',
+    id: 'shadow', name: 'Œuf Ombre', hint: 'Obscurité & secret', image: eggShadow,
     pool: [{ id: 92, name: 'Fantominus' }, { id: 104, name: 'Osselait' }, { id: 23, name: 'Abo' }],
   },
   {
-    id: 'crystal', name: 'Œuf Cristal', hint: 'Intelligence & logique',
-    color1: '#00BFFF', color2: '#E0F7FF', pattern: 'geometric',
+    id: 'crystal', name: 'Œuf Cristal', hint: 'Intelligence & logique', image: eggCrystal,
     pool: [{ id: 63, name: 'Abra' }, { id: 137, name: 'Porygon' }],
   },
   {
-    id: 'wild', name: 'Œuf Sauvage', hint: 'Instinct & liberté',
-    color1: '#8B4513', color2: '#D2B48C', pattern: 'spots',
+    id: 'wild', name: 'Œuf Sauvage', hint: 'Instinct & liberté', image: eggWild,
     pool: [
       { id: 52, name: 'Miaouss' }, { id: 133, name: 'Évoli' },
       { id: 132, name: 'Métamorph' }, { id: 79, name: 'Ramoloss' }, { id: 143, name: 'Ronflex' },
     ],
   },
   {
-    id: 'mystic', name: 'Œuf Mystic', hint: 'Puissance & noblesse',
-    color1: '#FFD700', color2: '#B8860B', pattern: 'scales',
+    id: 'mystic', name: 'Œuf Mystic', hint: 'Puissance & noblesse', image: eggMystic,
     pool: [{ id: 147, name: 'Minidraco' }, { id: 131, name: 'Lokhlass' }, { id: 115, name: 'Kangourex' }],
   },
   {
-    id: 'mystery', name: 'Œuf Mystère', hint: '??? · Surprise totale',
-    color1: '#888888', color2: '#CCCCCC', pattern: 'question',
+    id: 'mystery', name: 'Œuf Mystère', hint: '??? · Surprise totale', image: eggMystery,
     pool: [],
   },
 ]
+
+// ── Auras élémentaires ────────────────────────────────────────
+const eggAuras = {
+  flame:   'drop-shadow(0 0 18px rgba(255, 80, 0, 0.7))',
+  ocean:   'drop-shadow(0 0 18px rgba(0, 150, 255, 0.7))',
+  forest:  'drop-shadow(0 0 18px rgba(50, 180, 50, 0.7))',
+  thunder: 'drop-shadow(0 0 18px rgba(255, 220, 0, 0.8))',
+  moon:    'drop-shadow(0 0 18px rgba(255, 150, 200, 0.7))',
+  shadow:  'drop-shadow(0 0 18px rgba(120, 0, 180, 0.7))',
+  crystal: 'drop-shadow(0 0 18px rgba(100, 220, 255, 0.7))',
+  wild:    'drop-shadow(0 0 18px rgba(180, 120, 50, 0.6))',
+  mystic:  'drop-shadow(0 0 18px rgba(255, 200, 0, 0.8))',
+  mystery: 'drop-shadow(0 0 18px rgba(180, 180, 180, 0.5))',
+}
+
+function reducedAura(aura) {
+  return aura.replace(/rgba\(([^,]+,[^,]+,[^,]+),\s*([\d.]+)\)/, (_, rgb, a) =>
+    `rgba(${rgb}, ${(parseFloat(a) * 0.3).toFixed(2)})`)
+}
+
+// ── Egg image component ───────────────────────────────────────
+function EggShape({ egg, size = 120, animated = false, aura = null }) {
+  const style = {
+    width: size,
+    height: Math.round(size * 1.25),
+    objectFit: 'contain',
+    flexShrink: 0,
+    display: 'block',
+    pointerEvents: 'none',
+  }
+  // Center card: aura baked into crack-glow via CSS var; adjacent: static filter
+  if (animated && aura) style['--egg-aura'] = aura
+  else if (!animated && aura) style.filter = aura
+  return (
+    <img
+      src={egg.image}
+      alt={egg.name}
+      className={animated ? s.eggWobble : ''}
+      style={style}
+      draggable={false}
+    />
+  )
+}
 
 // ── Carousel constants ────────────────────────────────────────
 const CLONE = 3
@@ -69,21 +112,7 @@ const EXT = [...eggs.slice(-CLONE), ...eggs, ...eggs.slice(0, CLONE)]
 const SCALE_BY_DIST   = [1, 0.7,  0.533, 0]
 const OPACITY_BY_DIST = [1, 0.75, 0.35,  0]
 
-// ── Helpers ───────────────────────────────────────────────────
-function hexToRgba(hex, alpha) {
-  const n = parseInt(hex.replace('#', ''), 16)
-  return `rgba(${(n >> 16) & 0xff},${(n >> 8) & 0xff},${n & 0xff},${alpha})`
-}
-
-function darkenHex(hex, amount = 40) {
-  const n = parseInt(hex.replace('#', ''), 16)
-  const r = Math.max(0, ((n >> 16) & 0xff) - amount)
-  const g = Math.max(0, ((n >>  8) & 0xff) - amount)
-  const b = Math.max(0, ( n        & 0xff) - amount)
-  return `rgb(${r},${g},${b})`
-}
-
-// ── SVG Patterns ──────────────────────────────────────────────
+// ── SVG Patterns (kept for potential reuse) ───────────────────
 function EggPattern({ pattern }) {
   const cls = s.eggPattern
   switch (pattern) {
@@ -198,25 +227,6 @@ function EggPattern({ pattern }) {
     default:
       return null
   }
-}
-
-// ── Egg shape (pure CSS + SVG pattern) ───────────────────────
-function EggShape({ egg, size = 120, animated = false }) {
-  const h = Math.round(size * 1.25)
-  return (
-    <div
-      className={`${s.eggShape} ${animated ? s.eggWobble : ''}`}
-      style={{
-        width:        size,
-        height:       h,
-        background:   `linear-gradient(145deg, ${egg.color2} 0%, ${egg.color1} 60%, ${darkenHex(egg.color1)} 100%)`,
-        boxShadow:    `0 8px 32px ${hexToRgba(egg.color1, 0.4)}, inset 0 1px 0 rgba(255,255,255,0.4)`,
-        border:       '1px solid rgba(255,255,255,0.3)',
-      }}
-    >
-      <EggPattern pattern={egg.pattern}/>
-    </div>
-  )
 }
 
 // ── Card3D (zone-based tilt) ──────────────────────────────────
@@ -490,7 +500,7 @@ export default function EggSelector({ isNight, onBack, onChoose }) {
 
                 {isCenter ? (
                   <div className={s.cardContent}>
-                    <EggShape egg={egg} size={72} animated/>
+                    <EggShape egg={egg} size={94} animated aura={eggAuras[egg.id]}/>
                     <span className={s.eggName}>{egg.name}</span>
                     <span className={s.eggHint}>{egg.hint}</span>
                     <span className={s.poolCount}>
@@ -513,7 +523,7 @@ export default function EggSelector({ isNight, onBack, onChoose }) {
                   </div>
                 ) : (
                   <div className={s.cardContentSmall}>
-                    <EggShape egg={egg} size={54}/>
+                    <EggShape egg={egg} size={70} aura={reducedAura(eggAuras[egg.id])}/>
                     <span className={s.eggNameSmall}>{egg.name}</span>
                   </div>
                 )}

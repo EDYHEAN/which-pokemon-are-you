@@ -285,3 +285,270 @@
   pointer-events: none;
   z-index: 200;
 }
+
+/* ── Desktop layout ─────────────────────────────────────────── */
+
+@media (min-width: 768px) {
+  .header,
+  .tabs,
+  .content {
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
+  .header  { padding-left: 0; padding-right: 0; }
+  .tabs    { padding-left: 0; padding-right: 0; }
+  .content { padding-left: 0; padding-right: 0; padding-bottom: 40px; }
+}
+
+/* ── Tabs ────────────────────────────────────────────────────── */
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  padding: 0 16px 14px;
+  flex-shrink: 0;
+}
+
+.tab {
+  flex: 1;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 999px;
+  padding: 8px 4px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.8);
+}
+
+.tabActive {
+  background: rgba(255,255,255,0.92);
+  color: #1a1a1a;
+  border-color: rgba(255,255,255,0.9);
+  font-weight: 400;
+}
+
+.day .tab { color: rgba(0,0,0,0.45); background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.08); }
+.day .tab:hover { background: rgba(0,0,0,0.09); color: rgba(0,0,0,0.75); }
+.day .tabActive { background: rgba(0,0,0,0.82); color: #fff; border-color: rgba(0,0,0,0.8); }
+
+/* ── Scene grid ──────────────────────────────────────────────── */
+
+.sceneGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.sceneCard {
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: border-color 0.2s ease;
+}
+
+.sceneActive {
+  border-color: rgba(255,255,255,0.85);
+}
+.day .sceneActive { border-color: rgba(0,0,0,0.6); }
+
+.sceneCard:disabled { cursor: default; }
+
+.sceneThumbnailWrap {
+  position: relative;
+  width: 100%;
+  height: 120px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.sceneThumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* Locked placeholder — dark gradient */
+.scenePlaceholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(160deg, #1a1a2e 0%, #0f0f1a 60%, #161628 100%);
+  filter: blur(2px);
+}
+
+.sceneCheck {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+
+.sceneLocked .sceneThumbnail {
+  filter: grayscale(1) brightness(0.3);
+}
+
+.sceneLockOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: rgba(255,255,255,0.75);
+}
+
+.sceneLockLabel {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: #CC2222;
+  border-radius: 999px;
+  padding: 2px 7px;
+  text-align: center;
+}
+
+.sceneName {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.7);
+  transition: color 0.8s ease;
+}
+.day .sceneName { color: rgba(0,0,0,0.6); }
+
+/* ── Hat grid ────────────────────────────────────────────────── */
+
+@keyframes holoHat {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+
+.repositionBtn {
+  display: block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.5);
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: opacity 0.2s ease;
+}
+.repositionBtn:hover { opacity: 0.7; }
+.day .repositionBtn { color: rgba(0,0,0,0.4); border-color: rgba(0,0,0,0.12); }
+
+.hatGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.hatCard {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 14px 8px 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  position: relative;
+}
+
+.hatCard:not(:disabled):hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.day .hatCard { background: rgba(255,255,255,0.45); border-color: rgba(0,0,0,0.08); }
+
+.hatActive {
+  border-color: transparent;
+}
+
+.hatActive::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 15px;
+  padding: 2px;
+  background: linear-gradient(90deg, #ff0080, #ff8c00, #ffff00, #40e0d0, #7b2fff, #ff0080);
+  background-size: 400% 400%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: holoHat 2.5s linear infinite;
+  pointer-events: none;
+}
+
+.hatLocked {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.hatIconWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.6);
+  margin: 2px 0;
+}
+.day .hatIconWrap { color: rgba(0,0,0,0.4); }
+
+.hatLockOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.6);
+}
+
+.hatName {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.65);
+  text-align: center;
+  line-height: 1.3;
+}
+.day .hatName { color: rgba(0,0,0,0.55); }
+
+.hatLockLabel {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  font-weight: 300;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.35);
+}
+.day .hatLockLabel { color: rgba(0,0,0,0.3); }

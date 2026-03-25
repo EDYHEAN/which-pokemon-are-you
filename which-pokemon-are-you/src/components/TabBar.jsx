@@ -61,18 +61,25 @@ const TABS_RIGHT = [
   { id: 'account', label: 'Moi', Icon: AccountIcon },
 ]
 
-export default function TabBar({ activeTab, setActiveTab, isNight, hatchesAvailable = 0, onEggClick }) {
+export default function TabBar({ activeTab, setActiveTab, isNight, hatchesAvailable = 0, onEggClick, newItemUnlocked = false, onBagOpen }) {
   const canHatch = hatchesAvailable > 0
 
   function renderTab({ id, label, Icon }) {
     const active = activeTab === id
+    const showBagBadge = id === 'bag' && newItemUnlocked
     return (
       <button
         key={id}
         className={`${s.tab} ${active ? s.active : ''}`}
-        onClick={() => setActiveTab(id)}
+        onClick={() => {
+          setActiveTab(id)
+          if (id === 'bag') onBagOpen?.()
+        }}
       >
-        <Icon/>
+        <div className={s.iconWrap}>
+          <Icon/>
+          {showBagBadge && <span className={s.itemBadge}/>}
+        </div>
         <span className={s.label}>{label}</span>
         {active && <span className={s.dot}/>}
       </button>

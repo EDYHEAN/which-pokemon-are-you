@@ -78,6 +78,18 @@
 .content::-webkit-scrollbar { width: 3px; }
 .content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
 
+@media (min-width: 768px) {
+  .header, .tabs, .content {
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
+  .header  { padding-left: 0; padding-right: 0; }
+  .tabs    { padding-left: 0; padding-right: 0; }
+  .content { padding-left: 0; padding-right: 0; }
+}
+
 .grid3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

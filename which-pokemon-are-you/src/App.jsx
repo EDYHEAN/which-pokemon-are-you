@@ -124,6 +124,7 @@ export default function App() {
   const [hatchesAvailable, setHatchesAvailable] = useState(() => computeHatchesAvailable())
   const [pokemonSwitchKey, setPokemonSwitchKey] = useState(0)
   const [evolutionData, setEvolutionData] = useState(null) // { oldId, oldName, newId, newName, isShiny }
+  const [newItemUnlocked, setNewItemUnlocked] = useState(false)
 
   const rehatchRef = useRef(false)
 
@@ -146,7 +147,10 @@ export default function App() {
 
   // Listen for level-up events dispatched by PokemonHome
   useEffect(() => {
-    const handler = () => setHatchesAvailable(computeHatchesAvailable())
+    const handler = () => {
+      setHatchesAvailable(computeHatchesAvailable())
+      setNewItemUnlocked(true)
+    }
     window.addEventListener('poketama-level-up', handler)
     return () => window.removeEventListener('poketama-level-up', handler)
   }, [])
@@ -213,8 +217,10 @@ export default function App() {
     phase === 'enter' ? 'screen-enter' : '',
   ].filter(Boolean).join(' ')
 
+  const showNav = screen === 'home'
+
   return (
-    <div className={`app-root ${mode}`}>
+    <div className={`app-root ${mode}${showNav ? ' has-sidebar' : ''}`}>
 
       {/* Fixed background — always visible, never affected by screen transitions */}
       <div className={`bg-layer ${mode}`}>
@@ -249,8 +255,8 @@ export default function App() {
         {isNight ? <MoonIcon/> : <SunIcon/>}
       </button>
 
-      {/* Desktop sidebar */}
-      <aside className={`app-sidebar ${mode}`}>
+      {/* Desktop sidebar — only on home screen */}
+      {showNav && <aside className={`app-sidebar ${mode}`}>
         <div className="sidebar-logo">
           <PokeballIcon/>
         </div>
@@ -263,15 +269,32 @@ export default function App() {
                 activeTab === id && screen === 'home' ? 'active' : '',
                 screen !== 'home' ? 'sidebar-tab-disabled' : '',
               ].filter(Boolean).join(' ')}
-              onClick={() => screen === 'home' && setActiveTab(id)}
+              onClick={() => {
+                if (screen !== 'home') return
+                setActiveTab(id)
+                if (id === 'bag') setNewItemUnlocked(false)
+              }}
               title={label}
+              style={{ position: 'relative' }}
             >
               <Icon/>
+              {id === 'bag' && newItemUnlocked && (
+                <span style={{
+                  position: 'absolute',
+                  top: 6,
+                  right: 6,
+                  width: 8,
+                  height: 8,
+                  background: '#FF3B30',
+                  borderRadius: '50%',
+                  border: `1.5px solid ${isNight ? '#1a1a2e' : '#F7F4EF'}`,
+                  pointerEvents: 'none',
+                }}/>
+              )}
             </button>
           ))}
         </nav>
-        {screen === 'home' && (
-          <div className="sidebar-egg-wrap">
+        <div className="sidebar-egg-wrap">
             <button
               className={`sidebar-egg ${hatchesAvailable > 0 ? 'sidebar-egg-active' : 'sidebar-egg-inactive'}`}
               onClick={() => hatchesAvailable > 0 && handleEggButton()}
@@ -282,8 +305,7 @@ export default function App() {
                 <span className="sidebar-egg-badge">{hatchesAvailable}</span>
               )}
             </button>
-          </div>
-        )}
+        </div>
         <button
           className="sidebar-toggle"
           onClick={() => setIsNight(n => !n)}
@@ -291,7 +313,7 @@ export default function App() {
         >
           {isNight ? <MoonIcon/> : <SunIcon/>}
         </button>
-      </aside>
+      </aside>}
 
       {/* Game area — centered on desktop, full-screen on mobile */}
       <div className="app-center">
@@ -311,6 +333,8 @@ export default function App() {
                   isNight={isNight}
                   hatchesAvailable={hatchesAvailable}
                   onEggClick={handleEggButton}
+                  newItemUnlocked={newItemUnlocked}
+                  onBagOpen={() => setNewItemUnlocked(false)}
                 />
               </>
             ) : screen === 'hatching' ? (

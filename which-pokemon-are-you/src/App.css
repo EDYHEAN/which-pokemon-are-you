@@ -179,8 +179,8 @@
     align-items: stretch;
   }
 
-  /* Hide mobile toggle — sidebar has its own */
-  .app-toggle { display: none; }
+  /* Hide toggle when sidebar is visible (sidebar has its own toggle) */
+  .has-sidebar .app-toggle { display: none; }
 
   /* ── Sidebar ── */
 

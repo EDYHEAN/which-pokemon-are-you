@@ -2,6 +2,14 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import s from './PokemonHome.module.css'
 import { GAME_CONFIG, STORAGE_KEY, POOPS_KEY, freshStats, recalcStats, LEVEL_REWARDS, WILD_DROPS, EVOLUTIONS, addToInventory, loadProgress, saveProgress } from '../config/gameConfig'
 import LevelUpOverlay from './LevelUpOverlay'
+import { useFaviconBadge, drawFaviconWithBadge } from '../hooks/useFaviconBadge'
+import scene1 from '../assets/scenes/scene1.png'
+import scene2 from '../assets/scenes/scene2.png'
+import scene3 from '../assets/scenes/scene3.png'
+import scene4 from '../assets/scenes/scene4.png'
+
+const scenes = [scene1, scene2, scene3, scene4]
+
 
 function KennelIcon() {
   return (
@@ -95,167 +103,6 @@ function writeSave(pokemon, stats, xp, level) {
   } catch { /* ignore quota errors */ }
 }
 
-// ── Scene configs ─────────────────────────────────────────────
-const SCENES = [
-  {
-    bg:     'linear-gradient(180deg, #87CEEB 0%, #98D8C8 60%, #4a7c3f 100%)',
-    ground: 'linear-gradient(180deg, #4a7c3f 0%, #3a6a2f 100%)',
-  },
-  {
-    bg:     'linear-gradient(180deg, #2d5a1b 0%, #1a3a0f 100%)',
-    ground: 'linear-gradient(180deg, #1a3a0f 0%, #0f2408 100%)',
-  },
-  {
-    bg:     'linear-gradient(180deg, #87CEEB 0%, #FFF4C2 70%, #C2A96E 100%)',
-    ground: 'linear-gradient(180deg, #C2A96E 0%, #b89a5e 100%)',
-  },
-]
-
-// ── Scene 0 — Prairie ─────────────────────────────────────────
-function ScenePrairie() {
-  return (
-    <>
-      {/* Tree left */}
-      <div style={{ position:'absolute', left:'6%', bottom:'26%', zIndex:1, display:'flex', flexDirection:'column', alignItems:'center' }}>
-        <div style={{ width:52, height:52, background:'#4a9e3a', borderRadius:'50%', marginBottom:-16, flexShrink:0 }}/>
-        <div style={{ width:12, height:44, background:'#7a5225', borderRadius:'3px 3px 0 0', flexShrink:0 }}/>
-      </div>
-      {/* Tree right large */}
-      <div style={{ position:'absolute', right:'7%', bottom:'26%', zIndex:1, display:'flex', flexDirection:'column', alignItems:'center' }}>
-        <div style={{ width:72, height:72, background:'#3d8c30', borderRadius:'50%', marginBottom:-22, flexShrink:0 }}/>
-        <div style={{ width:16, height:60, background:'#6b4520', borderRadius:'3px 3px 0 0', flexShrink:0 }}/>
-      </div>
-      {/* Tree far right small */}
-      <div style={{ position:'absolute', right:'1%', bottom:'26%', zIndex:1, display:'flex', flexDirection:'column', alignItems:'center' }}>
-        <div style={{ width:38, height:38, background:'#5aa840', borderRadius:'50%', marginBottom:-12, flexShrink:0 }}/>
-        <div style={{ width:10, height:30, background:'#7a5225', borderRadius:'3px 3px 0 0', flexShrink:0 }}/>
-      </div>
-      {/* Grass tufts left */}
-      <div style={{ position:'absolute', left:'26%', bottom:'26%', zIndex:1, display:'flex', alignItems:'flex-end', gap:3 }}>
-        {[10, 14, 11, 13, 9].map((h, i) => (
-          <div key={i} style={{ width:4, height:h, background:'#4a9e3a', borderRadius:'3px 3px 0 0' }}/>
-        ))}
-      </div>
-      {/* Grass tufts right */}
-      <div style={{ position:'absolute', left:'58%', bottom:'26%', zIndex:1, display:'flex', alignItems:'flex-end', gap:3 }}>
-        {[8, 12, 9, 11].map((h, i) => (
-          <div key={i} style={{ width:4, height:h, background:'#5aa840', borderRadius:'3px 3px 0 0' }}/>
-        ))}
-      </div>
-      {/* Rock */}
-      <div style={{ position:'absolute', left:'38%', bottom:'27%', zIndex:1 }}>
-        <div style={{ width:32, height:20, background:'#9a9a9a', borderRadius:'50%', position:'relative' }}>
-          <div style={{ position:'absolute', top:3, left:5, width:10, height:5, background:'rgba(255,255,255,0.25)', borderRadius:'50%' }}/>
-        </div>
-      </div>
-    </>
-  )
-}
-
-// ── Scene 1 — Forêt ───────────────────────────────────────────
-function SceneForest() {
-  return (
-    <>
-      {/* Light rays */}
-      {[6, 24, 52, 72, 90].map((left, i) => (
-        <div key={i} style={{
-          position:'absolute', top:0, left:`${left}%`,
-          width:18 + i * 3, height:'75%',
-          background:'linear-gradient(180deg, rgba(255,255,180,0.07) 0%, transparent 100%)',
-          transform:'skewX(-12deg)',
-          zIndex:1, pointerEvents:'none',
-        }}/>
-      ))}
-      {/* Tree far left */}
-      <div style={{ position:'absolute', left:'-3%', bottom:'26%', zIndex:1, display:'flex', flexDirection:'column', alignItems:'center' }}>
-        <div style={{ width:80, height:120, background:'#1f4a14', borderRadius:'40% 40% 10% 10%', marginBottom:-28, flexShrink:0 }}/>
-        <div style={{ width:20, height:100, background:'#1a3a0f', flexShrink:0 }}/>
-      </div>
-      {/* Tree far right */}
-      <div style={{ position:'absolute', right:'-3%', bottom:'26%', zIndex:1, display:'flex', flexDirection:'column', alignItems:'center' }}>
-        <div style={{ width:90, height:130, background:'#1a3f10', borderRadius:'40% 40% 10% 10%', marginBottom:-32, flexShrink:0 }}/>
-        <div style={{ width:22, height:120, background:'#162e0a', flexShrink:0 }}/>
-      </div>
-      {/* Tree mid left */}
-      <div style={{ position:'absolute', left:'14%', bottom:'26%', zIndex:1, display:'flex', flexDirection:'column', alignItems:'center' }}>
-        <div style={{ width:60, height:90, background:'#254d14', borderRadius:'40% 40% 10% 10%', marginBottom:-22, flexShrink:0 }}/>
-        <div style={{ width:14, height:80, background:'#1e4210', flexShrink:0 }}/>
-      </div>
-      {/* Tree mid right */}
-      <div style={{ position:'absolute', right:'17%', bottom:'26%', zIndex:1, display:'flex', flexDirection:'column', alignItems:'center' }}>
-        <div style={{ width:64, height:100, background:'#204818', borderRadius:'40% 40% 10% 10%', marginBottom:-24, flexShrink:0 }}/>
-        <div style={{ width:16, height:88, background:'#192e0a', flexShrink:0 }}/>
-      </div>
-      {/* Mushroom left */}
-      <div style={{ position:'absolute', left:'28%', bottom:'26%', zIndex:1 }}>
-        <div style={{ width:6, height:10, background:'#E8D5B7', margin:'0 auto', borderRadius:'1px 1px 0 0' }}/>
-        <div style={{ width:18, height:11, background:'#CC2222', borderRadius:'50% 50% 20% 20%', marginTop:-5, marginLeft:-6, position:'relative' }}>
-          <div style={{ position:'absolute', top:2, left:3, width:4, height:4, background:'rgba(255,255,255,0.85)', borderRadius:'50%' }}/>
-          <div style={{ position:'absolute', top:5, left:10, width:3, height:3, background:'rgba(255,255,255,0.85)', borderRadius:'50%' }}/>
-        </div>
-      </div>
-      {/* Mushroom right small */}
-      <div style={{ position:'absolute', right:'30%', bottom:'26%', zIndex:1 }}>
-        <div style={{ width:5, height:8, background:'#E8D5B7', margin:'0 auto', borderRadius:'1px 1px 0 0' }}/>
-        <div style={{ width:14, height:9, background:'#CC2222', borderRadius:'50% 50% 20% 20%', marginTop:-4, marginLeft:-5, position:'relative' }}>
-          <div style={{ position:'absolute', top:2, left:3, width:3, height:3, background:'rgba(255,255,255,0.85)', borderRadius:'50%' }}/>
-        </div>
-      </div>
-      {/* Mossy rock */}
-      <div style={{ position:'absolute', left:'43%', bottom:'27%', zIndex:1 }}>
-        <div style={{ width:38, height:24, background:'#777', borderRadius:'50%', position:'relative' }}>
-          <div style={{ position:'absolute', top:2, left:3, width:32, height:18, background:'rgba(50,120,50,0.4)', borderRadius:'50%' }}/>
-          <div style={{ position:'absolute', top:3, left:7, width:8, height:4, background:'rgba(255,255,255,0.14)', borderRadius:'50%' }}/>
-        </div>
-      </div>
-    </>
-  )
-}
-
-// ── Scene 2 — Plage ───────────────────────────────────────────
-function SceneBeach() {
-  return (
-    <>
-      {/* Waves */}
-      <div className={s.wave}>
-        <svg viewBox="0 0 860 44" preserveAspectRatio="none" style={{ width:'100%', height:'100%' }}>
-          <path d="M0 22 Q108 6 215 22 Q322 38 430 22 Q538 6 645 22 Q752 38 860 22 L860 44 L0 44 Z" fill="rgba(100,180,255,0.55)"/>
-          <path d="M0 28 Q108 18 215 28 Q322 38 430 28 Q538 18 645 28 Q752 38 860 28 L860 44 L0 44 Z" fill="rgba(160,220,255,0.3)"/>
-        </svg>
-      </div>
-      {/* Palm tree */}
-      <div style={{ position:'absolute', right:'5%', bottom:'26%', zIndex:1 }}>
-        {[
-          { rotate:-45, top:-28, left:-34 },
-          { rotate:-20, top:-32, left:-20 },
-          { rotate:5,   top:-35, left:-6  },
-          { rotate:28,  top:-30, left:4   },
-          { rotate:50,  top:-22, left:10  },
-        ].map((leaf, i) => (
-          <div key={i} style={{
-            position:'absolute', top:leaf.top, left:leaf.left,
-            width:46, height:11,
-            background:'linear-gradient(90deg, #2d7a22, #4a9e3a)',
-            borderRadius:'0 50% 50% 0',
-            transform:`rotate(${leaf.rotate}deg)`,
-            transformOrigin:'left center',
-          }}/>
-        ))}
-        <div style={{ width:10, height:68, background:'linear-gradient(180deg, #8B6340, #6B4820)', borderRadius:5, transform:'rotate(4deg)', transformOrigin:'bottom center', margin:'0 auto' }}/>
-      </div>
-      {/* Shells */}
-      {[[22,27],[42,27],[58,26]].map(([left, bottom], i) => (
-        <div key={i} style={{
-          position:'absolute', left:`${left}%`, bottom:`${bottom}%`,
-          width:11, height:7, background:'#D4A574',
-          borderRadius:'50% 50% 30% 30%', zIndex:1,
-          border:'1px solid rgba(139,90,43,0.3)',
-          boxShadow:'inset 0 1px 0 rgba(255,255,255,0.3)',
-        }}/>
-      ))}
-    </>
-  )
-}
 
 // ── Wild Pokémon pool ─────────────────────────────────────────
 const WILD_POOL = [
@@ -318,16 +165,35 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
   const [deathStars,   setDeathStars]   = useState([])         // { id, x }
   const [showChenil,   setShowChenil]   = useState(false)
   const [chenilData,   setChenilData]   = useState(null)       // { allPokemon, activePokemonIndex }
+  const [pokemonPos,   setPokemonPos]   = useState(50)         // % horizontal in habitat
+  const [isWalking,    setIsWalking]    = useState(false)
+  const [facingLeft,   setFacingLeft]   = useState(false)
 
-  const statsRef    = useRef(null)
-  const xpRef       = useRef(0)
-  const levelRef    = useRef(1)
-  const bubbleRef   = useRef(null)
-  const bubbleTimer = useRef(null)
-  const poopsRef    = useRef([])
-  const wildRef     = useRef(null)
-  const wildTimerRef = useRef(null)
-  const scene       = useRef(Math.floor(Math.random() * 3)).current
+  const recheckFavicon = useFaviconBadge(stats)
+
+  const statsRef       = useRef(null)
+  const xpRef          = useRef(0)
+  const levelRef       = useRef(1)
+  const bubbleRef      = useRef(null)
+  const bubbleTimer    = useRef(null)
+  const poopsRef       = useRef([])
+  const wildRef        = useRef(null)
+  const wildTimerRef   = useRef(null)
+  const wildWrapRef    = useRef(null)
+  const pokemonPosRef  = useRef(50)
+  const walkDurationRef = useRef(0)
+  const [sceneIndex, setSceneIndex] = useState(() => {
+    const v = parseInt(localStorage.getItem('poketama_scene'), 10)
+    return isNaN(v) || v < 0 || v >= scenes.length ? 0 : v
+  })
+  const [equippedHat,    setEquippedHat]    = useState(() => localStorage.getItem('poketama_hat') || null)
+  const [isDragging,     setIsDragging]     = useState(false)
+  const [hatPos,         setHatPos]         = useState({ x: 0, y: 0 })
+  const [isPlacementMode, setIsPlacementMode] = useState(false)
+  const [dragCurrentPos, setDragCurrentPos] = useState({ x: 0, y: 0 })
+
+  const spriteRef = useRef(null)
+  const zoneRef   = useRef(null)
 
   // ── Init ──────────────────────────────────────────────────
   useEffect(() => {
@@ -381,6 +247,108 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
     }
     saveProgress(prog)
   }, [pokemon])
+
+  // ── Scene / hat event listeners ──────────────────────────────
+  useEffect(() => {
+    const onScene = (e) => setSceneIndex(e.detail.sceneId)
+    const onHat   = (e) => setEquippedHat(e.detail.hatId)
+    const onReposition = () => {
+      setIsPlacementMode(true)
+      const zone = zoneRef.current?.getBoundingClientRect()
+      if (zone) setDragCurrentPos({ x: zone.width / 2, y: zone.height / 2 })
+    }
+    window.addEventListener('poketama-scene-change',   onScene)
+    window.addEventListener('poketama-hat-change',     onHat)
+    window.addEventListener('poketama-hat-reposition', onReposition)
+    return () => {
+      window.removeEventListener('poketama-scene-change',   onScene)
+      window.removeEventListener('poketama-hat-change',     onHat)
+      window.removeEventListener('poketama-hat-reposition', onReposition)
+    }
+  }, [])
+
+  // ── Load saved hat offset / trigger placement on equip ────────
+  useEffect(() => {
+    if (!equippedHat) {
+      setHatPos({ x: 0, y: 0 })
+      setIsPlacementMode(false)
+      return
+    }
+    const saved = localStorage.getItem(`poketama_hat_offset_${pokemon.id}`)
+    if (saved) {
+      try { setHatPos(JSON.parse(saved)) } catch {}
+    } else {
+      setIsPlacementMode(true)
+      const zone = zoneRef.current?.getBoundingClientRect()
+      if (zone) setDragCurrentPos({ x: zone.width / 2, y: zone.height / 2 })
+    }
+  }, [equippedHat, pokemon.id])
+
+  // ── Desktop drag ──────────────────────────────────────────────
+  useEffect(() => {
+    if (!isDragging) return
+
+    const handleMouseMove = (e) => {
+      const zone = zoneRef.current?.getBoundingClientRect()
+      if (!zone) return
+      setDragCurrentPos({ x: e.clientX - zone.left, y: e.clientY - zone.top })
+    }
+
+    const handleMouseUp = (e) => {
+      setIsDragging(false)
+      if (!isPlacementMode) return
+      const sprite = spriteRef.current?.getBoundingClientRect()
+      const zone   = zoneRef.current?.getBoundingClientRect()
+      if (!sprite || !zone) return
+      const spriteCenterX = sprite.left - zone.left + sprite.width  / 2
+      const spriteCenterY = sprite.top  - zone.top  + sprite.height / 2
+      const offset = { x: dragCurrentPos.x - spriteCenterX, y: dragCurrentPos.y - spriteCenterY }
+      setHatPos(offset)
+      localStorage.setItem(`poketama_hat_offset_${pokemon.id}`, JSON.stringify(offset))
+      setIsPlacementMode(false)
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup',   handleMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup',   handleMouseUp)
+    }
+  }, [isDragging, dragCurrentPos, isPlacementMode, pokemon.id])
+
+  // ── Mobile drag ───────────────────────────────────────────────
+  useEffect(() => {
+    if (!isDragging) return
+
+    const handleTouchMove = (e) => {
+      e.preventDefault()
+      const touch = e.touches[0]
+      const zone  = zoneRef.current?.getBoundingClientRect()
+      if (!zone) return
+      setDragCurrentPos({ x: touch.clientX - zone.left, y: touch.clientY - zone.top })
+    }
+
+    const handleTouchEnd = (e) => {
+      setIsDragging(false)
+      if (!isPlacementMode) return
+      const sprite = spriteRef.current?.getBoundingClientRect()
+      const zone   = zoneRef.current?.getBoundingClientRect()
+      if (!sprite || !zone) return
+      const spriteCenterX = sprite.left - zone.left + sprite.width  / 2
+      const spriteCenterY = sprite.top  - zone.top  + sprite.height / 2
+      const offset = { x: dragCurrentPos.x - spriteCenterX, y: dragCurrentPos.y - spriteCenterY }
+      setHatPos(offset)
+      localStorage.setItem(`poketama_hat_offset_${pokemon.id}`, JSON.stringify(offset))
+      setIsPlacementMode(false)
+    }
+
+    window.addEventListener('touchmove', handleTouchMove, { passive: false })
+    window.addEventListener('touchend',  handleTouchEnd)
+    return () => {
+      window.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('touchend',  handleTouchEnd)
+    }
+  }, [isDragging, dragCurrentPos, isPlacementMode, pokemon.id])
 
   // ── Periodic save every 60s + poop spawn check ──────────────
   useEffect(() => {
@@ -476,15 +444,16 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
       timeout = setTimeout(() => {
         if (!wildRef.current) {
           const pick = WILD_POOL[Math.floor(Math.random() * WILD_POOL.length)]
-          const fromLeft = Math.random() < 0.5
-          const newWild = { ...pick, hp: 10, maxHp: 10, x: 10 + Math.random() * 60, fromLeft }
+          const newWild = { ...pick, hp: 10, maxHp: 10 }
           setWildPokemon(newWild)
           wildRef.current = newWild
-          // Auto-despawn after 30s if untouched
+          drawFaviconWithBadge(true)
+          // Auto-despawn after 11s (matches 10s walk animation + 1s grace)
           wildTimerRef.current = setTimeout(() => {
             setWildPokemon(null)
             wildRef.current = null
-          }, 30000)
+            recheckFavicon()
+          }, 11000)
         }
         scheduleSpawn()
       }, delay)
@@ -494,6 +463,31 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
       clearTimeout(timeout)
       clearTimeout(wildTimerRef.current)
     }
+  }, [])
+
+  // ── Pokémon random movement ───────────────────────────────
+  useEffect(() => {
+    let moveTimeout
+    function scheduleNextMove() {
+      const waitTime = 8000 + Math.random() * 12000
+      moveTimeout = setTimeout(() => {
+        const newPos = 20 + Math.random() * 60
+        const currentPos = pokemonPosRef.current
+        setFacingLeft(newPos < currentPos)
+        const distance = Math.abs(newPos - currentPos)
+        const walkDuration = Math.max(400, distance * 40)
+        walkDurationRef.current = walkDuration
+        setIsWalking(true)
+        setPokemonPos(newPos)
+        pokemonPosRef.current = newPos
+        setTimeout(() => {
+          setIsWalking(false)
+          scheduleNextMove()
+        }, walkDuration)
+      }, waitTime)
+    }
+    scheduleNextMove()
+    return () => clearTimeout(moveTimeout)
   }, [])
 
   // ── Evolution check helper ────────────────────────────────
@@ -598,7 +592,12 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
     if (!wildPokemon || wildDying) return
 
     const newHp = wildPokemon.hp - 1
-    const hitX  = wildPokemon.x + 3
+
+    // Read current animated position from DOM
+    const el = wildWrapRef.current
+    const leftPx = el ? parseFloat(window.getComputedStyle(el).left) || 0 : 0
+    const containerW = el?.parentElement?.clientWidth || 300
+    const hitX = (leftPx / containerW) * 100 + 3
 
     // Red flash 80ms
     setWildHit(true)
@@ -622,8 +621,10 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
     if (newHp <= 0) {
       // ── DEATH ───────────────────────────────────────────
       clearTimeout(wildTimerRef.current)
+      // Freeze current animated left before replacing animation
+      if (el) el.style.left = `${leftPx}px`
       setWildDying(true)
-      const deadX = wildPokemon.x + 3
+      const deadX = hitX
       setWildPokemon(prev => prev ? { ...prev, hp: 0 } : prev)
 
       const xpGain = 15 + Math.floor(Math.random() * 11) // 15-25
@@ -676,6 +677,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
         setWildDying(false)
         setWildPokemon(null)
         wildRef.current = null
+        recheckFavicon()
 
         const rawXp = xpRef.current + xpGain
         if (rawXp >= GAME_CONFIG.xp.evolutionThreshold) {
@@ -707,7 +709,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
       setWildPokemon(updated)
       wildRef.current = updated
     }
-  }, [wildPokemon, wildDying, pokemon])
+  }, [wildPokemon, wildDying, pokemon, recheckFavicon])
 
   // ── Chenil ────────────────────────────────────────────────
   const handleOpenChenil = useCallback(() => {
@@ -792,19 +794,50 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
   ].filter(a => a.show)
 
   const xpPct = Math.round((xp / GAME_CONFIG.xp.evolutionThreshold) * 100)
-  const sc    = SCENES[scene]
   const mode  = isNight ? s.night : s.day
+
+  // ── Hat style — computed each render from live DOM rects ──────
+  const getHatStyle = () => {
+    if (isPlacementMode) {
+      return {
+        position: 'absolute',
+        left: dragCurrentPos.x,
+        top:  dragCurrentPos.y,
+        transform: 'translate(-50%, -50%)',
+        zIndex: 200,
+        cursor: isDragging ? 'grabbing' : 'grab',
+        filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))',
+        animation: isDragging ? 'none' : undefined,
+      }
+    }
+    const sprite = spriteRef.current?.getBoundingClientRect()
+    const zone   = zoneRef.current?.getBoundingClientRect()
+    if (!sprite || !zone) return { display: 'none' }
+    const spriteCenterX = sprite.left - zone.left + sprite.width  / 2
+    const spriteCenterY = sprite.top  - zone.top  + sprite.height / 2
+    return {
+      position: 'absolute',
+      left: spriteCenterX + hatPos.x,
+      top:  spriteCenterY + hatPos.y,
+      transform: 'translate(-50%, -50%)',
+      zIndex: 10,
+      pointerEvents: 'none',
+    }
+  }
 
   return (
     <div className={`${s.page} ${mode}`}>
 
       {/* ── Habitat ── */}
-      <div className={s.habitat} style={{ background: sc.bg }}>
-        <div className={s.ground} style={{ background: sc.ground }}/>
-
-        {scene === 0 && <ScenePrairie/>}
-        {scene === 1 && <SceneForest/>}
-        {scene === 2 && <SceneBeach/>}
+      <div
+        ref={zoneRef}
+        className={s.habitat}
+        style={{
+          backgroundImage: `url(${scenes[sceneIndex]})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center bottom',
+        }}
+      >
 
         {/* Poops */}
         {poops.map(poop => (
@@ -826,8 +859,8 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
         {/* Wild Pokémon */}
         {wildPokemon && (
           <div
+            ref={wildWrapRef}
             className={[s.wildWrap, wildDying ? s.wildDying : ''].filter(Boolean).join(' ')}
-            style={{ left: `${wildPokemon.x}%` }}
             onClick={handleWildClick}
           >
             <div className={s.wildHpBar}>
@@ -841,7 +874,6 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
                 wildHit ? s.wildHit : '',
                 wildPokemon.hp <= 3 && !wildDying ? s.wildCritical : '',
               ].filter(Boolean).join(' ')}
-              style={!wildPokemon.fromLeft ? { transform: 'scaleX(-1)' } : {}}
               draggable={false}
             />
           </div>
@@ -900,14 +932,70 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon }) {
           </div>
         )}
 
-        <div className={s.pokemonWrap} onClick={handleTap}>
+        <div
+          className={s.pokemonWrap}
+          style={{
+            left: `${pokemonPos}%`,
+            transform: 'translateX(-50%)',
+            transition: isWalking ? `left ${walkDurationRef.current}ms linear` : 'none',
+          }}
+          onClick={handleTap}
+        >
           {bubble && (
             <div key={bubble.key} className={s.reactionBubble}>
               {bubble.emoji} {bubble.text}
             </div>
           )}
-          <img src={spriteUrl} alt={pokemon.name} className={s.pokemonSprite} draggable={false}/>
+          <div className={`${s.pokemonShadow} ${isWalking ? s.pokemonShadowWalking : ''}`}/>
+          <img
+            ref={spriteRef}
+            src={spriteUrl}
+            alt={pokemon.name}
+            className={`${s.pokemonSprite} ${isWalking ? s.pokemonSpriteWalking : ''}`}
+            style={{ '--flip': facingLeft ? -1 : 1, zIndex: 1, position: 'relative' }}
+            draggable={false}
+          />
         </div>
+
+        {/* ── Hat placement overlay (pointer-events: none — window handles drag) ── */}
+        {isPlacementMode && (
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'rgba(0,0,0,0.45)',
+            zIndex: 150,
+            display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
+            paddingTop: '16px',
+            pointerEvents: 'none',
+          }}>
+            <div style={{
+              background: 'rgba(255,255,255,0.92)',
+              borderRadius: '100px',
+              padding: '8px 18px',
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: '13px',
+              fontWeight: '300',
+              color: '#1a1a1a',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
+            }}>
+              Placez le chapeau sur la tête de votre Pokémon
+            </div>
+          </div>
+        )}
+
+        {/* ── Hat element — absolute in habitat ── */}
+        {equippedHat && (
+          <svg
+            width="40" height="26" viewBox="0 0 28 18"
+            style={getHatStyle()}
+            onMouseDown={isPlacementMode ? (e) => { e.preventDefault(); setIsDragging(true) } : undefined}
+            onTouchStart={isPlacementMode ? (e) => { e.preventDefault(); setIsDragging(true) } : undefined}
+            className={isPlacementMode && !isDragging ? s.hatDraggable : undefined}
+          >
+            <rect x="5" y="0" width="18" height="12" rx="3" fill="#2a2a2a"/>
+            <rect x="0" y="11" width="28" height="5" rx="2" fill="#1a1a1a"/>
+          </svg>
+        )}
+
       </div>
 
       {/* ── Dashboard ── */}

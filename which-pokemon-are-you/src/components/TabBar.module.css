@@ -71,6 +71,28 @@
   animation: eggPulse 2s ease-in-out infinite;
 }
 
+.iconWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.itemBadge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background: #FF3B30;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  pointer-events: none;
+}
+
+.night .itemBadge { border-color: rgba(15, 15, 25, 0.92); }
+.day .itemBadge   { border-color: rgba(247, 244, 239, 0.95); }
+
 .eggIconWrap {
   position: relative;
   display: flex;

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import Landing from './components/Landing'
+import NameScreen from './components/NameScreen'
 import EggSelector from './components/EggSelector'
 import HatchScreen from './components/HatchScreen'
 import PokemonHome from './components/PokemonHome'
@@ -104,6 +105,17 @@ function SideEggIcon() {
       boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.6)',
       flexShrink: 0,
     }}/>
+  )
+}
+
+function SidePokeballIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+      <circle cx="11" cy="11" r="10" fill="white" stroke="currentColor" strokeWidth="1.5"/>
+      <path d="M1 11 Q1 2 11 2 Q21 2 21 11" fill="#E63946"/>
+      <rect x="1" y="10" width="20" height="2" fill="currentColor"/>
+      <circle cx="11" cy="11" r="3" fill="white" stroke="currentColor" strokeWidth="1.5"/>
+    </svg>
   )
 }
 
@@ -300,6 +312,13 @@ export default function App() {
           ⚡
         </button>
         <button
+          className="sidebar-god"
+          onClick={() => window.dispatchEvent(new CustomEvent('poketama-spawn-wild'))}
+          title="Faire spawner un wild"
+        >
+          <SidePokeballIcon/>
+        </button>
+        <button
           className="sidebar-toggle"
           onClick={() => setIsNight(n => !n)}
           aria-label={isNight ? 'Switch to day' : 'Switch to night'}
@@ -370,10 +389,15 @@ export default function App() {
                   goTo('hatching')
                 }}
               />
+            ) : screen === 'name' ? (
+              <NameScreen
+                isNight={isNight}
+                onContinue={() => goTo('selector')}
+              />
             ) : (
               <Landing
                 isNight={isNight}
-                onChoose={() => goTo('selector')}
+                onChoose={() => goTo('name')}
               />
             )}
           </div>

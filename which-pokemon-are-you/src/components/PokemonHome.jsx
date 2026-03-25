@@ -164,21 +164,73 @@ const REACTIONS = [
 ]
 
 // ── Auto bubble messages ──────────────────────────────────────
-const NEED_MESSAGES = {
-  hunger:        { emoji: '🍖', text: 'J\'ai faim !' },
-  thirst:        { emoji: '💧', text: 'J\'ai soif !' },
-  entertainment: { emoji: '⭐', text: 'Je m\'ennuie !' },
-  toilet:        { emoji: '🚽', text: 'Urgence !' },
+function buildNeedMessages(n) {
+  return {
+    hunger: [
+      `${n}. faim. maintenant.`,
+      `je mange ou je rage.`,
+      `croquettes ou rien.`,
+      `ventre vide, mood nul.`,
+    ],
+    thirst: [
+      `${n} de l'eau stp.`,
+      `je sèche ici.`,
+      `soif niveau extrême.`,
+      `hydrate-moi ou else.`,
+    ],
+    entertainment: [
+      `${n} t'es là ?`,
+      `je m'ennuie à mourir.`,
+      `on joue ou quoi ?`,
+      `POV : abandon total.`,
+    ],
+    toilet: [
+      `URGENT. non négo.`,
+      `${n} vite vite vite.`,
+      `c'est critique là.`,
+      `toilettes. NOW.`,
+    ],
+  }
 }
 
-const GENERIC_MESSAGES = [
-  { emoji: '♡', text: 'Coucou !' },
-  { emoji: '✨', text: 'Je t\'aime !' },
-  { emoji: '🌟', text: 'On joue ?' },
-  { emoji: '😊', text: 'Hehe~' },
-  { emoji: '💤', text: 'Zzzz...' },
-  { emoji: '🎵', text: 'La la la~' },
-]
+function buildGenericMessages(n) {
+  return [
+    `${n} on est bons ?`,
+    `vie de poké, c'est ça.`,
+    `ratio bonne journée : ok`,
+    `je suis là. t'inquiète.`,
+    `t'as vu mes stats ?`,
+    `${n} tu m'manques ngl`,
+    `j'ai fait 3 pas. content.`,
+    `soleil ou pas, je suis là.`,
+  ]
+}
+
+const POKEMON_MESSAGES = {
+  129: (n) => [
+    `splash. c'est tout.`,
+    `un jour j'évoluerai.`,
+    `${n} pourquoi moi.`,
+  ],
+  143: () => [
+    `manger. dormir. repeat.`,
+    `réveille-moi pour manger.`,
+    `zzzz... croquettes... zzzz`,
+  ],
+  132: () => [
+    `je suis qui déjà ?`,
+    `forme libre. humeur idem.`,
+  ],
+  25: (n) => [
+    `PIKA. (= nourris-moi)`,
+    `...pika. (= ennui total)`,
+    `${n} PIKA PIKA.`,
+  ],
+  54: () => [
+    `ma tête. toujours.`,
+    `quak. (douleur chronique)`,
+  ],
+}
 
 // ── Main component ────────────────────────────────────────────
 export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode = false }) {
@@ -190,10 +242,11 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
   const [poops,        setPoops]        = useState([])
   const [dyingPoops,   setDyingPoops]   = useState(new Set()) // poop IDs mid-death animation
   const [xpFloats,     setXpFloats]     = useState([])         // { id, x, text }
-  const [wildPokemon,  setWildPokemon]  = useState(null)       // { id, name, hp, maxHp, x, fromLeft }
-  const [wildHit,      setWildHit]      = useState(false)
-  const [wildDying,    setWildDying]    = useState(false)
-  const [dmgFloats,    setDmgFloats]    = useState([])         // { id, x }
+  const [wilds,        setWilds]        = useState([])         // [{ id, pokemonId, name, x, hp, maxHp, isDefeated, lastTap }]
+  const [wildHits,     setWildHits]     = useState(new Set())  // ids doing white flash
+  const [wildDyings,   setWildDyings]   = useState(new Set())  // ids doing fadeOut
+  const [dmgFloats,    setDmgFloats]    = useState([])         // { id, x, text }
+  const [userVibrating, setUserVibrating] = useState(false)
   const [dropNotif,    setDropNotif]    = useState(null)       // { emoji, name }
   const [dropItem,     setDropItem]     = useState(null)       // { emoji, x }
   const [hitStars,     setHitStars]     = useState([])         // { id, x, tx, ty }
@@ -214,9 +267,8 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
   const bubbleRef      = useRef(null)
   const bubbleTimer    = useRef(null)
   const poopsRef       = useRef([])
-  const wildRef        = useRef(null)
-  const wildTimerRef   = useRef(null)
-  const wildWrapRef    = useRef(null)
+  const wildsRef            = useRef([])
+  const triggerWildDefeatRef = useRef(null)
   const pokemonPosRef  = useRef(50)
   const walkDurationRef = useRef(0)
   const [sceneIndex, setSceneIndex] = useState(() => {
@@ -235,15 +287,13 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
   const [bagNotif,       setBagNotif]       = useState(false)
   const [hatRenderPos,   setHatRenderPos]   = useState({ x: 0, y: 0 })
 
-  const [drawerMaxHeight, setDrawerMaxHeight] = useState('50%')
-
   const spriteRef         = useRef(null)
   const zoneRef           = useRef(null)
-  const dashboardRef      = useRef(null)
   const dragPosRef        = useRef({ x: 0, y: 0 })
   const isPlacementRef    = useRef(false)
   const rafRef            = useRef(null)
   const statsLastUpdated  = useRef(Date.now())
+  const tickCountRef      = useRef(0)
 
   // ── Init ──────────────────────────────────────────────────
   useEffect(() => {
@@ -251,8 +301,28 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
     let initStats, initXp, initLevel
 
     if (save) {
-      const elapsed = Date.now() - save.lastSaved
-      initStats = recalcStats(save.stats, elapsed)
+      const elapsed = Date.now() - (save.lastSaved || Date.now())
+      const minutes = elapsed / 60000
+      const s = { ...save.stats }
+      const hour = new Date().getHours()
+      s.hunger        = Math.max(0, s.hunger        - minutes / 45)
+      s.thirst        = Math.max(0, s.thirst        - minutes / 30)
+      s.entertainment = Math.max(0, s.entertainment - minutes / 35)
+      s.toilet        = Math.max(0, s.toilet        - minutes / 180)
+      if (hour >= 8 && hour < 22) {
+        s.energy = Math.max(0, s.energy - (minutes / (14 * 60)) * 100)
+      } else {
+        s.energy = Math.min(100, s.energy + minutes * 10 / 60)
+      }
+      const needsAt0 = ['hunger','thirst','entertainment','toilet'].filter(k => s[k] <= 0).length
+      if (needsAt0 > 0 && elapsed > 2 * 60 * 60 * 1000) {
+        const dmgHours = (elapsed - 2 * 60 * 60 * 1000) / 3600000
+        s.health = Math.max(1, s.health - needsAt0 * dmgHours * 5)
+      }
+      s.hunger = Math.round(s.hunger); s.thirst = Math.round(s.thirst)
+      s.entertainment = Math.round(s.entertainment); s.toilet = Math.round(s.toilet)
+      s.energy = Math.round(s.energy); s.health = Math.round(s.health)
+      initStats = s
       initXp    = save.xp    ?? 0
       initLevel = save.level ?? 1
     } else {
@@ -264,9 +334,10 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
     setStats(initStats)
     setXp(initXp)
     setLevel(initLevel)
-    statsRef.current = initStats
-    xpRef.current    = initXp
-    levelRef.current = initLevel
+    statsRef.current     = initStats
+    xpRef.current        = initXp
+    levelRef.current     = initLevel
+    statsLastUpdated.current = Date.now()
 
     // Load persisted poops
     try {
@@ -334,13 +405,22 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
     if (saved) {
       try { setHatPos(JSON.parse(saved)) } catch {}
     } else {
-      isPlacementRef.current = true
-      setIsPlacementMode(true)
-      const zone = zoneRef.current?.getBoundingClientRect()
-      if (zone) {
-        const pos = { x: zone.width / 2, y: zone.height / 2 }
-        dragPosRef.current = pos
-        setDragCurrentPos(pos)
+      const tutorialDone = localStorage.getItem('poketama_hat_tutorial_done') === 'true'
+      if (!tutorialDone) {
+        // First hat ever — show placement tutorial
+        isPlacementRef.current = true
+        setIsPlacementMode(true)
+        const zone = zoneRef.current?.getBoundingClientRect()
+        if (zone) {
+          const pos = { x: zone.width / 2, y: zone.height / 2 }
+          dragPosRef.current = pos
+          setDragCurrentPos(pos)
+        }
+      } else {
+        // Tutorial already done — use default center offset (0,0)
+        const defaultOffset = { x: 0, y: -20 }
+        setHatPos(defaultOffset)
+        localStorage.setItem(`poketama_hat_offset_${pokemon.id}`, JSON.stringify(defaultOffset))
       }
     }
   }, [equippedHatId, pokemon.id])
@@ -370,6 +450,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
       const offset = { x: dragPosRef.current.x - spriteCenterX, y: dragPosRef.current.y - spriteCenterY }
       setHatPos(offset)
       localStorage.setItem(`poketama_hat_offset_${pokemonId}`, JSON.stringify(offset))
+      localStorage.setItem('poketama_hat_tutorial_done', 'true')
       isPlacementRef.current = false
       setIsPlacementMode(false)
     }
@@ -413,17 +494,6 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
     return () => { cancelAnimationFrame(rafRef.current); rafRef.current = null }
   }, [isPlacementMode, equippedHat, hatPos, facingLeft])
 
-  // ── Drawer height = dashboard height ─────────────────────────
-  useEffect(() => {
-    const updateHeight = () => {
-      if (dashboardRef.current) {
-        setDrawerMaxHeight(dashboardRef.current.offsetHeight + 'px')
-      }
-    }
-    updateHeight()
-    window.addEventListener('resize', updateHeight)
-    return () => window.removeEventListener('resize', updateHeight)
-  }, [])
 
   // ── Mobile drag ───────────────────────────────────────────────
   useEffect(() => {
@@ -452,6 +522,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
       const offset = { x: dragPosRef.current.x - spriteCenterX, y: dragPosRef.current.y - spriteCenterY }
       setHatPos(offset)
       localStorage.setItem(`poketama_hat_offset_${pokemonId}`, JSON.stringify(offset))
+      localStorage.setItem('poketama_hat_tutorial_done', 'true')
       isPlacementRef.current = false
       setIsPlacementMode(false)
     }
@@ -464,34 +535,73 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
     }
   }, [isDragging])
 
-  // ── Stats ticker every 60s — decay + save + poop check ───────
+  // ── Stats ticker every 30s — timestamp-based continuous decay ──
   useEffect(() => {
-    if (!stats) return
-    statsLastUpdated.current = Date.now()
-    const interval = setInterval(() => {
-      const now     = Date.now()
-      const elapsed = now - statsLastUpdated.current
-      statsLastUpdated.current = now
+    function recalculateStats() {
+      try {
+        const rawSave = localStorage.getItem(STORAGE_KEY)
+        if (!rawSave) return
+        const saved = JSON.parse(rawSave)
+        if (!saved?.stats || saved.pokemon?.id !== pokemon.id) return
 
-      const next = recalcStats(statsRef.current, elapsed)
-      console.log('[stats tick] elapsed:', elapsed, 'ms |', next)
-      statsRef.current = next
-      setStats(next)
-      writeSave(pokemon, next, xpRef.current, levelRef.current)
+        const now     = Date.now()
+        const elapsed = now - (saved.lastSaved || now)
+        const minutes = elapsed / 60000
 
-      // Spawn poop if toilet empty and under cap
-      if (next.toilet === 0 && poopsRef.current.length < 4) {
-        if (Math.random() < 0.5) {
+        const s = { ...saved.stats }
+        s.hunger        = Math.max(0, s.hunger        - minutes / 45)
+        s.thirst        = Math.max(0, s.thirst        - minutes / 30)
+        s.entertainment = Math.max(0, s.entertainment - minutes / 35)
+        s.toilet        = Math.max(0, s.toilet        - minutes / 180)
+
+        const hour = new Date().getHours()
+        if (hour >= 8 && hour < 22) {
+          s.energy = Math.max(0, s.energy - (minutes / (14 * 60)) * 100)
+        } else {
+          s.energy = Math.min(100, s.energy + minutes * 10 / 60)
+        }
+
+        // HP regen if all needs satisfied (+1 per 6 min)
+        const allGood = s.hunger > 30 && s.thirst > 30 && s.entertainment > 30 && s.toilet > 30
+        if (allGood && s.health < 100) {
+          s.health = Math.min(100, s.health + minutes / 6)
+        }
+
+        // HP damage if needs empty for over 2h
+        if (!allGood && elapsed > 2 * 60 * 60 * 1000) {
+          const needsAt0 = ['hunger','thirst','entertainment','toilet'].filter(k => s[k] <= 0).length
+          if (needsAt0 > 0) {
+            const dmgHours = (elapsed - 2 * 60 * 60 * 1000) / 3600000
+            s.health = Math.max(1, s.health - needsAt0 * dmgHours * 5)
+          }
+        }
+
+        s.hunger        = Math.round(s.hunger)
+        s.thirst        = Math.round(s.thirst)
+        s.entertainment = Math.round(s.entertainment)
+        s.toilet        = Math.round(s.toilet)
+        s.energy        = Math.round(s.energy)
+        s.health        = Math.round(s.health)
+
+        statsRef.current = s
+        setStats(s)
+
+        // Poop spawn if toilet empty
+        if (s.toilet === 0 && poopsRef.current.length < 4 && Math.random() < 0.5) {
           const newPoop  = { id: Date.now(), x: 10 + Math.random() * 70 }
           const newPoops = [...poopsRef.current, newPoop]
           setPoops(newPoops)
           poopsRef.current = newPoops
           localStorage.setItem(POOPS_KEY, JSON.stringify(newPoops))
         }
-      }
-    }, 60 * 1000)
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...saved, stats: s, lastSaved: now }))
+      } catch {}
+    }
+
+    const interval = setInterval(recalculateStats, 30 * 1000)
     return () => clearInterval(interval)
-  }, [!!stats, pokemon])
+  }, [pokemon])
 
   // ── Stats update listener (from BagScreen item use) ───────
   useEffect(() => {
@@ -529,65 +639,141 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
   useEffect(() => {
     if (!stats) return
     const interval = setInterval(() => {
-      // Skip if bubble is already visible
       if (bubbleRef.current) return
 
       const currentStats = statsRef.current
-      const T = GAME_CONFIG.alertThreshold
+      const trainerName = localStorage.getItem('poketama_trainer_name') || 'Dresseur'
 
-      // Check for needs below threshold
       const needKeys = ['hunger', 'thirst', 'entertainment', 'toilet']
-      const urgentNeeds = needKeys.filter(k => currentStats && currentStats[k] <= T)
+      const urgentNeeds = needKeys.filter(k => currentStats && currentStats[k] <= 30)
 
-      let msg
+      let text
       if (urgentNeeds.length > 0) {
         const key = urgentNeeds[Math.floor(Math.random() * urgentNeeds.length)]
-        msg = NEED_MESSAGES[key]
+        const msgs = buildNeedMessages(trainerName)[key]
+        text = msgs[Math.floor(Math.random() * msgs.length)]
       } else {
-        msg = GENERIC_MESSAGES[Math.floor(Math.random() * GENERIC_MESSAGES.length)]
+        const pokemonMsgFn = POKEMON_MESSAGES[pokemon.id]
+        if (pokemonMsgFn && Math.random() < 0.3) {
+          const msgs = pokemonMsgFn(trainerName)
+          text = msgs[Math.floor(Math.random() * msgs.length)]
+        } else {
+          const msgs = buildGenericMessages(trainerName)
+          text = msgs[Math.floor(Math.random() * msgs.length)]
+        }
       }
 
-      const bubble = { emoji: msg.emoji, text: msg.text, key: Date.now(), auto: true }
+      const truncated = text.length > 50 ? text.slice(0, 50).trimEnd() + '…' : text
+      const bubble = { emoji: '', text: truncated, key: Date.now(), auto: true }
       setBubble(bubble)
       bubbleRef.current = bubble
       clearTimeout(bubbleTimer.current)
       bubbleTimer.current = setTimeout(() => {
         setBubble(null)
         bubbleRef.current = null
-      }, 4000)
-    }, 20 * 1000)
+      }, 4300)
+    }, 25 * 1000)
 
     return () => clearInterval(interval)
-  }, [!!stats])
+  }, [!!stats, pokemon])
 
-  // ── Wild Pokémon spawn (random 45-90s) ───────────────────
+  // ── Wild Pokémon spawn (random 30-60s, max 3 simultaneous) ──
   useEffect(() => {
     let timeout
     function scheduleSpawn() {
-      const delay = 45000 + Math.random() * 45000
+      const delay = 30000 + Math.random() * 30000
       timeout = setTimeout(() => {
-        if (!wildRef.current) {
+        setWilds(prev => {
+          const active = prev.filter(w => !w.isDefeated)
+          if (active.length >= 3) return prev
           const pick = WILD_POOL[Math.floor(Math.random() * WILD_POOL.length)]
-          const newWild = { ...pick, hp: 10, maxHp: 10, isInFront: Math.random() > 0.5 }
-          setWildPokemon(newWild)
-          wildRef.current = newWild
-          drawFaviconWithBadge(true)
-          // Auto-despawn after 11s (matches 10s walk animation + 1s grace)
-          wildTimerRef.current = setTimeout(() => {
-            setWildPokemon(null)
-            wildRef.current = null
-            recheckFavicon()
-          }, 11000)
-        }
+          const dir = Math.random() < 0.5 ? 1 : -1
+          const newWild = {
+            id: Date.now(),
+            pokemonId: pick.id,
+            name: pick.name,
+            x: 10 + Math.random() * 70,
+            speedX: 0.1 + Math.random() * 1.1,
+            hp: 100,
+            maxHp: 100,
+            isDefeated: false,
+            lastTap: 0,
+            direction: dir,
+            facingLeft: dir < 0,
+            isPaused: false,
+            pauseTimer: 0,
+          }
+          return [...active, newWild]
+        })
         scheduleSpawn()
       }, delay)
     }
     scheduleSpawn()
-    return () => {
-      clearTimeout(timeout)
-      clearTimeout(wildTimerRef.current)
-    }
+    return () => clearTimeout(timeout)
   }, [])
+
+  // ── Wild JS movement — organic bounce with pauses ────────
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWilds(prev => {
+        if (!prev.some(w => !w.isDefeated)) return prev
+        return prev.map(w => {
+          if (w.isDefeated) return w
+          if (w.isPaused) {
+            const newTimer = w.pauseTimer - 1
+            return newTimer <= 0 ? { ...w, isPaused: false, pauseTimer: 0 } : { ...w, pauseTimer: newTimer }
+          }
+          let x = w.x + w.direction * w.speedX
+          let direction = w.direction
+          if (x > 82) { x = 82; direction = -1 }
+          if (x < 8)  { x = 8;  direction = 1  }
+          let speedX = w.speedX + (Math.random() - 0.5) * 0.02
+          speedX = Math.max(0.1, Math.min(1.2, speedX))
+          const isPaused  = Math.random() < 0.025
+          const pauseTimer = isPaused ? Math.floor(20 + Math.random() * 60) : 0
+          return { ...w, x, direction, facingLeft: direction < 0, speedX, isPaused, pauseTimer }
+        })
+      })
+    }, 50)
+    return () => clearInterval(interval)
+  }, [])
+
+  // ── Manual wild spawn (sidebar button via custom event) ───
+  useEffect(() => {
+    function handleForceSpawn() {
+      setWilds(prev => {
+        const active = prev.filter(w => !w.isDefeated)
+        if (active.length >= 3) return prev
+        const pick = WILD_POOL[Math.floor(Math.random() * WILD_POOL.length)]
+        const dir = Math.random() < 0.5 ? 1 : -1
+        return [...active, {
+          id: Date.now(),
+          pokemonId: pick.id,
+          name: pick.name,
+          x: 10 + Math.random() * 70,
+          speedX: 0.1 + Math.random() * 1.1,
+          hp: 100, maxHp: 100,
+          isDefeated: false, lastTap: 0,
+          direction: dir, facingLeft: dir < 0,
+          isPaused: false, pauseTimer: 0,
+        }]
+      })
+    }
+    window.addEventListener('poketama-spawn-wild', handleForceSpawn)
+    return () => window.removeEventListener('poketama-spawn-wild', handleForceSpawn)
+  }, [])
+
+  // ── Keep wildsRef in sync ─────────────────────────────────
+  useEffect(() => { wildsRef.current = wilds }, [wilds])
+
+  // ── Favicon badge when wilds present ─────────────────────
+  useEffect(() => {
+    if (wilds.filter(w => !w.isDefeated).length > 0) {
+      drawFaviconWithBadge(true)
+    } else {
+      recheckFavicon()
+    }
+  }, [wilds])
 
   // ── Pokémon random movement ───────────────────────────────
   useEffect(() => {
@@ -656,6 +842,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
         saveProgress(prog)
         window.dispatchEvent(new CustomEvent('poketama-level-up'))
         checkLevelEvolution(pokemon.id, pokemon.name, pokemon.isShiny, newLevel)
+        next.health = Math.min(100, next.health + 30)
       }
 
       writeSave(pokemon, next, xpRef.current, levelRef.current)
@@ -703,6 +890,9 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
         saveProgress(prog)
         window.dispatchEvent(new CustomEvent('poketama-level-up'))
         checkLevelEvolution(pokemon.id, pokemon.name, pokemon.isShiny, newLevel)
+        const boosted = { ...statsRef.current, health: Math.min(100, statsRef.current.health + 30) }
+        statsRef.current = boosted
+        setStats(boosted)
       } else {
         xpRef.current = rawXp
         setXp(rawXp)
@@ -711,24 +901,133 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
     }, 300)
   }, [dyingPoops, pokemon])
 
-  // ── Wild Pokémon hit ─────────────────────────────────────
-  const handleWildClick = useCallback((e) => {
+  // ── Wild defeat sequence (shared tap + auto) ─────────────
+  const triggerWildDefeat = useCallback((wildId, hitX, xpGain) => {
+    setWilds(prev => prev.map(w => w.id === wildId ? { ...w, hp: 0, isDefeated: true } : w))
+    setWildDyings(prev => new Set([...prev, wildId]))
+
+    const xpId = Date.now() + Math.random() + 1
+    setXpFloats(prev => [...prev, { id: xpId, x: hitX, text: `+${xpGain} XP` }])
+    setTimeout(() => setXpFloats(prev => prev.filter(f => f.id !== xpId)), 1100)
+
+    setDeathFlash(true)
+    setTimeout(() => setDeathFlash(false), 300)
+
+    const pColors = ['#FF4444','#FF9900','#FFD700','#FF44AA','#44FFAA','#4488FF','#FF8844','#FFFFFF']
+    const particles = Array.from({ length: 8 }, (_, i) => ({
+      id: i, x: hitX,
+      tx: `${Math.round((Math.random() - 0.5) * 120)}px`,
+      ty: `${Math.round((Math.random() - 0.5) * 120)}px`,
+      color: pColors[i],
+      size: `${4 + Math.floor(Math.random() * 5)}px`,
+      delay: `${i * 0.05}s`,
+    }))
+    setDeathParticles(particles)
+    setTimeout(() => setDeathParticles([]), 700)
+
+    const dStars = [-12, 0, 12].map((offset, i) => ({ id: i, x: hitX + offset / 10 }))
+    setDeathStars(dStars)
+    setTimeout(() => setDeathStars([]), 800)
+
+    const roll = Math.random()
+    let cumulative = 0
+    let drop = null
+    for (const d of WILD_DROPS) {
+      cumulative += d.chance
+      if (roll < cumulative) { drop = d; break }
+    }
+    if (drop) {
+      addToInventory(drop.id, 1)
+      setDropItem({ emoji: drop.emoji, x: hitX })
+      setTimeout(() => setDropItem(null), 2000)
+      setDropNotif({ emoji: drop.emoji, name: drop.name })
+      setTimeout(() => setDropNotif(null), 2800)
+    }
+
+    setTimeout(() => {
+      setWilds(prev => prev.filter(w => w.id !== wildId))
+      setWildDyings(prev => { const n = new Set(prev); n.delete(wildId); return n })
+
+      const rawXp = xpRef.current + xpGain
+      if (rawXp >= GAME_CONFIG.xp.evolutionThreshold) {
+        const newLevel = levelRef.current + 1
+        levelRef.current = newLevel
+        setLevel(newLevel)
+        xpRef.current = 0
+        setXp(0)
+        const reward = LEVEL_REWARDS[newLevel] || null
+        if (reward) { addToInventory(reward.id, reward.quantity); setBagNotif(true) }
+        setLevelUpData({ level: newLevel, reward: reward || null })
+        const prog = loadProgress()
+        const pi = prog.allPokemon.findIndex(p => p.id === pokemon.id)
+        if (pi >= 0) prog.allPokemon[pi].level = newLevel
+        else prog.allPokemon.push({ id: pokemon.id, name: pokemon.name, level: newLevel })
+        saveProgress(prog)
+        window.dispatchEvent(new CustomEvent('poketama-level-up'))
+        checkLevelEvolution(pokemon.id, pokemon.name, pokemon.isShiny, newLevel)
+        const boosted = { ...statsRef.current, health: Math.min(100, statsRef.current.health + 30) }
+        statsRef.current = boosted
+        setStats(boosted)
+      } else {
+        xpRef.current = rawXp
+        setXp(rawXp)
+      }
+      writeSave(pokemon, statsRef.current, xpRef.current, levelRef.current)
+    }, 700)
+  }, [pokemon])
+
+  // Keep defeat ref in sync for auto-combat interval
+  useEffect(() => { triggerWildDefeatRef.current = triggerWildDefeat }, [triggerWildDefeat])
+
+  // ── Auto-combat: wild attacks every 3s if not tapped for 10s ──
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now()
+      const activeWilds = wildsRef.current.filter(w => !w.isDefeated)
+      if (activeWilds.length === 0) return
+
+      activeWilds.forEach(w => {
+        if (w.lastTap !== 0 && now - w.lastTap < 10000) return
+
+        const newHp = w.hp - 30
+
+        const dmgId = Date.now() + Math.random()
+        setDmgFloats(prev => [...prev, { id: dmgId, x: w.x, text: '-30' }])
+        setTimeout(() => setDmgFloats(prev => prev.filter(f => f.id !== dmgId)), 650)
+
+        setUserVibrating(true)
+        setTimeout(() => setUserVibrating(false), 300)
+
+        setStats(prev => {
+          if (!prev) return prev
+          const next = { ...prev, health: Math.max(0, prev.health - 1), energy: Math.max(0, prev.energy - 0.5) }
+          statsRef.current = next
+          writeSave(pokemon, next, xpRef.current, levelRef.current)
+          return next
+        })
+
+        if (newHp <= 0) {
+          triggerWildDefeatRef.current?.(w.id, w.x, 15)
+        } else {
+          setWilds(prev => prev.map(ww => ww.id === w.id ? { ...ww, hp: newHp } : ww))
+        }
+      })
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [pokemon])
+
+  // ── Wild tap: -25hp, white flash, update lastTap ──────────
+  const handleWildClick = useCallback((e, wildId) => {
     e.stopPropagation()
-    if (!wildPokemon || wildDying) return
+    const wild = wildsRef.current.find(w => w.id === wildId)
+    if (!wild || wild.isDefeated) return
 
-    const newHp = wildPokemon.hp - 1
+    const newHp = wild.hp - 25
+    const hitX = wild.x
 
-    // Read current animated position from DOM
-    const el = wildWrapRef.current
-    const leftPx = el ? parseFloat(window.getComputedStyle(el).left) || 0 : 0
-    const containerW = el?.parentElement?.clientWidth || 300
-    const hitX = (leftPx / containerW) * 100 + 3
+    setWildHits(prev => new Set([...prev, wildId]))
+    setTimeout(() => setWildHits(prev => { const n = new Set(prev); n.delete(wildId); return n }), 200)
 
-    // Red flash 80ms
-    setWildHit(true)
-    setTimeout(() => setWildHit(false), 80)
-
-    // Hit stars — 4 diagonal sparks
     const starGroupId = `${Date.now()}-${Math.random()}`
     const newStars = [
       { tx: '20px', ty: '-20px' }, { tx: '-20px', ty: '-20px' },
@@ -738,103 +1037,16 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
     setHitStars(prev => [...prev, ...newStars])
     setTimeout(() => setHitStars(prev => prev.filter(s => !starIds.has(s.id))), 400)
 
-    // "-1" damage float
     const dmgId = Date.now() + Math.random()
-    setDmgFloats(prev => [...prev, { id: dmgId, x: hitX }])
+    setDmgFloats(prev => [...prev, { id: dmgId, x: hitX, text: '-25' }])
     setTimeout(() => setDmgFloats(prev => prev.filter(f => f.id !== dmgId)), 650)
 
+    setWilds(prev => prev.map(w => w.id === wildId ? { ...w, hp: Math.max(0, newHp), lastTap: Date.now() } : w))
+
     if (newHp <= 0) {
-      // ── DEATH ───────────────────────────────────────────
-      clearTimeout(wildTimerRef.current)
-      // Freeze current animated left before replacing animation
-      if (el) el.style.left = `${leftPx}px`
-      setWildDying(true)
-      const deadX = hitX
-      setWildPokemon(prev => prev ? { ...prev, hp: 0 } : prev)
-
-      const xpGain = 15 + Math.floor(Math.random() * 11) // 15-25
-
-      // "+XX XP" float
-      const xpId = Date.now() + Math.random() + 1
-      setXpFloats(prev => [...prev, { id: xpId, x: deadX, text: `+${xpGain} XP` }])
-      setTimeout(() => setXpFloats(prev => prev.filter(f => f.id !== xpId)), 1100)
-
-      // White flash overlay
-      setDeathFlash(true)
-      setTimeout(() => setDeathFlash(false), 300)
-
-      // 8 explosion particles
-      const pColors = ['#FF4444','#FF9900','#FFD700','#FF44AA','#44FFAA','#4488FF','#FF8844','#FFFFFF']
-      const particles = Array.from({ length: 8 }, (_, i) => ({
-        id: i, x: deadX,
-        tx: `${Math.round((Math.random() - 0.5) * 120)}px`,
-        ty: `${Math.round((Math.random() - 0.5) * 120)}px`,
-        color: pColors[i],
-        size: `${4 + Math.floor(Math.random() * 5)}px`,
-        delay: `${i * 0.05}s`,
-      }))
-      setDeathParticles(particles)
-      setTimeout(() => setDeathParticles([]), 700)
-
-      // 3 ⭐ stars flying up
-      const dStars = [-12, 0, 12].map((offset, i) => ({ id: i, x: deadX + offset / 10 }))
-      setDeathStars(dStars)
-      setTimeout(() => setDeathStars([]), 800)
-
-      // Drop roll — cumulative chance through WILD_DROPS table
-      const roll = Math.random()
-      let cumulative = 0
-      let drop = null
-      for (const d of WILD_DROPS) {
-        cumulative += d.chance
-        if (roll < cumulative) { drop = d; break }
-      }
-
-      if (drop) {
-        addToInventory(drop.id, 1)
-        setDropItem({ emoji: drop.emoji, x: deadX })
-        setTimeout(() => setDropItem(null), 2000)
-        setDropNotif({ emoji: drop.emoji, name: drop.name })
-        setTimeout(() => setDropNotif(null), 2800)
-      }
-
-      setTimeout(() => {
-        setWildDying(false)
-        setWildPokemon(null)
-        wildRef.current = null
-        recheckFavicon()
-
-        const rawXp = xpRef.current + xpGain
-        if (rawXp >= GAME_CONFIG.xp.evolutionThreshold) {
-          const newLevel = levelRef.current + 1
-          levelRef.current = newLevel
-          setLevel(newLevel)
-          xpRef.current = 0
-          setXp(0)
-          const reward = LEVEL_REWARDS[newLevel] || null
-          if (reward) { addToInventory(reward.id, reward.quantity); setBagNotif(true) }
-          setLevelUpData({ level: newLevel, reward: reward || null })
-
-          const prog = loadProgress()
-          const pi = prog.allPokemon.findIndex(p => p.id === pokemon.id)
-          if (pi >= 0) prog.allPokemon[pi].level = newLevel
-          else prog.allPokemon.push({ id: pokemon.id, name: pokemon.name, level: newLevel })
-          saveProgress(prog)
-          window.dispatchEvent(new CustomEvent('poketama-level-up'))
-          checkLevelEvolution(pokemon.id, pokemon.name, pokemon.isShiny, newLevel)
-        } else {
-          xpRef.current = rawXp
-          setXp(rawXp)
-        }
-        writeSave(pokemon, statsRef.current, xpRef.current, levelRef.current)
-      }, 700)
-
-    } else {
-      const updated = { ...wildPokemon, hp: newHp }
-      setWildPokemon(updated)
-      wildRef.current = updated
+      triggerWildDefeat(wildId, hitX, 15)
     }
-  }, [wildPokemon, wildDying, pokemon, recheckFavicon])
+  }, [triggerWildDefeat])
 
   // ── Chenil ────────────────────────────────────────────────
   const handleOpenChenil = useCallback(() => {
@@ -971,34 +1183,32 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
           </div>
         ))}
 
-        {/* Wild Pokémon */}
-        {wildPokemon && (
+        {/* Wild Pokémon — position wrapper + animated sprite (no transform conflict) */}
+        {wilds.map(wild => (
           <div
-            ref={wildWrapRef}
-            className={[s.wildWrap, wildDying ? s.wildDying : ''].filter(Boolean).join(' ')}
-            onClick={handleWildClick}
-            style={{
-              zIndex: wildPokemon.isInFront ? 5 : 1,
-              transform: `scale(${wildPokemon.isInFront ? 1.1 : 0.85})`,
-              opacity: wildPokemon.isInFront ? 1 : 0.8,
-              filter: wildPokemon.isInFront ? 'none' : 'brightness(0.85)',
-            }}
+            key={wild.id}
+            className={[s.wildWrap, wildDyings.has(wild.id) ? s.wildDying : ''].filter(Boolean).join(' ')}
+            style={{ left: `${wild.x}%` }}
+            onClick={(e) => handleWildClick(e, wild.id)}
           >
             <div className={s.wildHpBar}>
-              <div className={s.wildHpFill} style={{ width: `${(wildPokemon.hp / wildPokemon.maxHp) * 100}%` }}/>
+              <div className={s.wildHpFill} style={{ width: `${(wild.hp / wild.maxHp) * 100}%` }}/>
             </div>
             <img
-              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${wildPokemon.id}.png`}
-              alt={wildPokemon.name}
+              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${wild.pokemonId}.png`}
+              alt={wild.name}
               className={[
                 s.wildSprite,
-                wildHit ? s.wildHit : '',
-                wildPokemon.hp <= 3 && !wildDying ? s.wildCritical : '',
+                wildHits.has(wild.id) ? s.wildHit : '',
+                wild.hp <= 25 && !wild.isDefeated ? s.wildCritical : '',
               ].filter(Boolean).join(' ')}
+              style={{
+                transform: `scaleX(${wild.facingLeft ? -1 : 1})`,
+              }}
               draggable={false}
             />
           </div>
-        )}
+        ))}
 
         {/* Hit stars (per click) */}
         {hitStars.map(star => (
@@ -1009,9 +1219,9 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
           >✦</div>
         ))}
 
-        {/* Damage floats (-1) */}
+        {/* Damage floats */}
         {dmgFloats.map(f => (
-          <div key={f.id} className={s.dmgFloat} style={{ left: `${f.x}%` }}>-1</div>
+          <div key={f.id} className={s.dmgFloat} style={{ left: `${f.x}%` }}>{f.text || '-10'}</div>
         ))}
 
         {/* Death particles */}
@@ -1063,8 +1273,12 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
           onClick={handleTap}
         >
           {bubble && (
-            <div key={bubble.key} className={s.reactionBubble}>
-              {bubble.emoji} {bubble.text}
+            <div
+              key={bubble.key}
+              className={s.reactionBubble}
+              style={!bubble.auto ? { animationDuration: '1.5s' } : undefined}
+            >
+              {bubble.emoji ? `${bubble.emoji} ${bubble.text}` : bubble.text}
             </div>
           )}
           <div className={`${s.pokemonShadow} ${isWalking ? s.pokemonShadowWalking : ''}`}/>
@@ -1072,7 +1286,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
             ref={spriteRef}
             src={spriteUrl}
             alt={pokemon.name}
-            className={`${s.pokemonSprite} ${isWalking ? s.pokemonSpriteWalking : ''}`}
+            className={`${s.pokemonSprite} ${isWalking ? s.pokemonSpriteWalking : ''} ${userVibrating ? s.userVibrating : ''}`}
             style={{ '--flip': facingLeft ? -1 : 1, zIndex: 1, position: 'relative' }}
             draggable={false}
           />
@@ -1166,7 +1380,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
       </div>
 
       {/* ── Dashboard ── */}
-      <div ref={dashboardRef} className={s.dashboard}>
+      <div className={s.dashboard}>
 
         {/* Header */}
         <div className={s.dashHeader}>
@@ -1261,6 +1475,40 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
           </div>
         </div>
 
+        {/* ── Overlay derrière le drawer ── */}
+        {bagOpen && (
+          <div
+            style={{
+              position: 'absolute', inset: 0,
+              zIndex: 99,
+              background: 'transparent',
+            }}
+            onClick={() => {
+              setBagClosing(true)
+              setTimeout(() => { setBagOpen(false); setBagClosing(false) }, 350)
+            }}
+          />
+        )}
+
+        {/* ── Drawer sac — enfant du dashboard, height: 100% ── */}
+        {bagOpen && (
+          <div
+            className={`${s.bagDrawer} ${bagClosing ? s.bagDrawerClosing : ''}`}
+            style={{ zIndex: 100 }}
+          >
+            <BagScreen
+              pokemon={pokemon}
+              isNight={isNight}
+              godMode={godMode}
+              embedded
+              onClose={() => {
+                setBagClosing(true)
+                setTimeout(() => { setBagOpen(false); setBagClosing(false) }, 350)
+              }}
+            />
+          </div>
+        )}
+
       </div>
 
       {levelUpData && (
@@ -1269,25 +1517,6 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
           reward={levelUpData.reward}
           onClose={() => setLevelUpData(null)}
         />
-      )}
-
-      {/* ── Drawer sac ── */}
-      {bagOpen && (
-        <div
-          className={`${s.bagDrawer} ${bagClosing ? s.bagDrawerClosing : ''}`}
-          style={{ height: drawerMaxHeight, top: 'auto' }}
-        >
-          <BagScreen
-            pokemon={pokemon}
-            isNight={isNight}
-            godMode={godMode}
-            embedded
-            onClose={() => {
-              setBagClosing(true)
-              setTimeout(() => { setBagOpen(false); setBagClosing(false) }, 350)
-            }}
-          />
-        </div>
       )}
 
       {showChenil && chenilData && (

@@ -1,0 +1,142 @@
+@keyframes wobble {
+  0%   { transform: rotate(0deg) translateY(0); }
+  10%  { transform: rotate(-8deg) translateY(-6px); }
+  20%  { transform: rotate(8deg) translateY(-8px); }
+  30%  { transform: rotate(-6deg) translateY(-6px); }
+  40%  { transform: rotate(6deg) translateY(-7px); }
+  50%  { transform: rotate(0deg) translateY(0); }
+  100% { transform: rotate(0deg) translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0%   { transform: translateX(-180%) skewX(-16deg); }
+  100% { transform: translateX(280%)  skewX(-16deg); }
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px;
+  background: transparent;
+  animation: fadeIn 0.4s ease forwards;
+  position: relative;
+}
+
+.egg {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
+  filter: drop-shadow(0 0 8px rgba(255,255,255,0.3));
+  animation: wobble 2.5s ease-in-out infinite;
+}
+
+.title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 300;
+  text-align: center;
+  color: #1a1a1a;
+  margin: 32px 0 0;
+  line-height: 1.25;
+  transition: color 0.8s ease;
+}
+
+.night .title { color: #F0EDE8; }
+
+.input {
+  display: block;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid rgba(255,255,255,0.4);
+  text-align: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  color: white;
+  width: 100%;
+  max-width: 240px;
+  margin: 32px auto;
+  outline: none;
+  padding: 4px 0;
+  transition: border-color 0.2s ease;
+}
+
+.day .input {
+  border-bottom-color: rgba(0,0,0,0.25);
+  color: #1a1a1a;
+}
+
+.input::placeholder {
+  color: rgba(255,255,255,0.35);
+}
+
+.day .input::placeholder {
+  color: rgba(0,0,0,0.25);
+}
+
+.input:focus {
+  border-bottom-color: rgba(255,255,255,0.75);
+}
+
+.day .input:focus {
+  border-bottom-color: rgba(0,0,0,0.5);
+}
+
+.cta {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  color: #111;
+  background: rgba(255,255,255,0.5);
+  backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.8);
+  border-radius: 999px;
+  height: 56px;
+  width: 260px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 20px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  margin-top: 8px;
+}
+
+.night .cta {
+  background: rgba(255,255,255,0.95);
+  border-color: rgba(255,255,255,0.9);
+  box-shadow: 0 2px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,1);
+}
+
+.cta:not(:disabled):hover {
+  opacity: 0.85;
+  transform: translateY(-2px);
+}
+
+.cta:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.cta::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 40%; height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.55) 50%, transparent 100%);
+  animation: shimmer 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.cta:disabled::after {
+  display: none;
+}

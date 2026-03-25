@@ -254,21 +254,6 @@ export default function BagScreen({ pokemon, isNight, onClose, embedded, godMode
             </div>
           )}
 
-          {locked.length > 0 && (
-            <section>
-              <p className={s.sectionLabel}>Verrouillés</p>
-              <div className={s.grid}>
-                {locked.map(def => (
-                  <div key={def.id} className={`${s.card} ${s.lockedCard}`}>
-                    <span className={s.emoji} style={{ filter: 'grayscale(1) brightness(0.5)' }}>{def.emoji}</span>
-                    <p className={s.itemName}>{def.name}</p>
-                    <p className={s.itemDesc}>{def.description}</p>
-                    <div className={s.lockBadge}>Niveau {def.requiredLevel} requis</div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
 
         </>}
 

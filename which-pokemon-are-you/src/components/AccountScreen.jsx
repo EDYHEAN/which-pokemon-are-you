@@ -80,6 +80,18 @@ export default function AccountScreen({ pokemon, isNight, onReset }) {
         </div>
 
       </div>
+
+      <p style={{
+        textAlign: 'center',
+        fontSize: '11px',
+        color: 'rgba(255,255,255,0.2)',
+        letterSpacing: '0.15em',
+        fontFamily: 'DM Sans',
+        marginTop: 'auto',
+        paddingBottom: '24px',
+      }}>
+        Made in Johto by Edy Hean
+      </p>
     </div>
   )
 }

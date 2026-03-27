@@ -897,6 +897,124 @@
   }
 }
 
+/* ── Mini-jeux drawer ───────────────────────────────────────── */
+
+.minigamesDrawer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px 16px 24px;
+  overflow-y: auto;
+}
+
+.minigamesHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.minigamesTitle {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.92);
+  margin: 0;
+  letter-spacing: 0.02em;
+}
+
+.minigamesSubtitle {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.35);
+  margin: 3px 0 0;
+  letter-spacing: 0.03em;
+}
+
+.minigamesClose {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 18px;
+  color: rgba(255,255,255,0.55);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.minigamesClose:hover { background: rgba(255,255,255,0.14); }
+
+.minigamesGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.minigameCard {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-bottom: 14px;
+}
+
+.minigameCardPlaceholder {
+  opacity: 0.4;
+}
+
+.minigameCardIllus {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.minigameCardIcon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.minigameCardName {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.88);
+  margin: 0 0 4px;
+  padding: 0 14px;
+}
+
+.minigameCardScore {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.35);
+  margin: 0 0 10px;
+  padding: 0 14px;
+}
+
+.minigameBadgeSoon {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.38);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 999px;
+  padding: 4px 12px;
+  margin-left: 14px;
+}
+
 /* ── Chenil overlay ──────────────────────────────────────────── */
 
 .chenilOverlay {

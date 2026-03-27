@@ -206,12 +206,14 @@ export function applyItemEffect(itemId, pokemon) {
       }
     }
     else if (eff === 'level+1') {
-      save.level = (save.level || 1) + 1
-      save.xp    = 0
+      save.level   = (save.level || 1) + 1
+      save.xp      = 0
+      stats.health = Math.min(100, stats.health + 30)
     }
     else if (eff === 'level+2') {
-      save.level = (save.level || 1) + 2
-      save.xp    = 0
+      save.level   = (save.level || 1) + 2
+      save.xp      = 0
+      stats.health = Math.min(100, stats.health + 30)
     }
 
     save.stats = stats

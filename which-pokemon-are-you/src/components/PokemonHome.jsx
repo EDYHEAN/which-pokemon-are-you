@@ -12,6 +12,19 @@ import BagScreen from './BagScreen'
 
 const scenes = [scene1, scene2, scene3, scene4]
 
+const DECAY_RATES = {
+  hunger:        1 / 45,
+  thirst:        1 / 30,
+  entertainment: 1 / 35,
+  toilet:        1 / 180,
+}
+
+const MINIGAMES = [
+  { id: 'doodle_jump', name: 'Poké Jump',         icon: '⬆️', color: '#4A90E2', available: false },
+  { id: 'runner',      name: 'Endless Run',        icon: '🏃', color: '#E24A4A', available: false },
+  { id: 'catch',       name: 'Attrape les baies',  icon: '🍇', color: '#4AE27A', available: false },
+]
+
 
 function KennelIcon() {
   return (
@@ -255,6 +268,9 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
   const [deathStars,   setDeathStars]   = useState([])         // { id, x }
   const [showChenil,   setShowChenil]   = useState(false)
   const [chenilData,   setChenilData]   = useState(null)       // { allPokemon, activePokemonIndex }
+  const [cooldowns,       setCooldowns]       = useState({ hunger: 0, thirst: 0, toilet: 0 })
+  const [showMinigames,   setShowMinigames]   = useState(false)
+  const [minigamesClosing, setMinigamesClosing] = useState(false)
   const [pokemonPos,   setPokemonPos]   = useState(50)         // % horizontal in habitat
   const [isWalking,    setIsWalking]    = useState(false)
   const [facingLeft,   setFacingLeft]   = useState(false)
@@ -535,73 +551,67 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
     }
   }, [isDragging])
 
-  // ── Stats ticker every 30s — timestamp-based continuous decay ──
+  // ── Stats ticker — timestamp-based, zero stale closure ──────
   useEffect(() => {
-    function recalculateStats() {
-      try {
-        const rawSave = localStorage.getItem(STORAGE_KEY)
-        if (!rawSave) return
-        const saved = JSON.parse(rawSave)
-        if (!saved?.stats || saved.pokemon?.id !== pokemon.id) return
+    const tick = () => {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (!raw) return
 
-        const now     = Date.now()
-        const elapsed = now - (saved.lastSaved || now)
-        const minutes = elapsed / 60000
+      const save = JSON.parse(raw)
+      const now = Date.now()
+      const minutes = (now - save.lastSaved) / 60000
+      if (minutes < 0.1) return
 
-        const s = { ...saved.stats }
-        s.hunger        = Math.max(0, s.hunger        - minutes / 45)
-        s.thirst        = Math.max(0, s.thirst        - minutes / 30)
-        s.entertainment = Math.max(0, s.entertainment - minutes / 35)
-        s.toilet        = Math.max(0, s.toilet        - minutes / 180)
+      const s = { ...save.stats }
 
-        const hour = new Date().getHours()
-        if (hour >= 8 && hour < 22) {
-          s.energy = Math.max(0, s.energy - (minutes / (14 * 60)) * 100)
-        } else {
-          s.energy = Math.min(100, s.energy + minutes * 10 / 60)
-        }
+      s.hunger        = Math.max(0, s.hunger        - DECAY_RATES.hunger        * minutes)
+      s.thirst        = Math.max(0, s.thirst        - DECAY_RATES.thirst        * minutes)
+      s.entertainment = Math.max(0, s.entertainment - DECAY_RATES.entertainment * minutes)
+      s.toilet        = Math.max(0, s.toilet        - DECAY_RATES.toilet        * minutes)
 
-        // HP regen if all needs satisfied (+1 per 6 min)
-        const allGood = s.hunger > 30 && s.thirst > 30 && s.entertainment > 30 && s.toilet > 30
-        if (allGood && s.health < 100) {
-          s.health = Math.min(100, s.health + minutes / 6)
-        }
+      const hour = new Date().getHours()
+      if (hour >= 8 && hour < 22) {
+        s.energy = Math.max(0, s.energy - (minutes / 840) * 100)
+      }
 
-        // HP damage if needs empty for over 2h
-        if (!allGood && elapsed > 2 * 60 * 60 * 1000) {
-          const needsAt0 = ['hunger','thirst','entertainment','toilet'].filter(k => s[k] <= 0).length
-          if (needsAt0 > 0) {
-            const dmgHours = (elapsed - 2 * 60 * 60 * 1000) / 3600000
-            s.health = Math.max(1, s.health - needsAt0 * dmgHours * 5)
-          }
-        }
+      Object.keys(s).forEach(k => {
+        if (typeof s[k] === 'number') s[k] = Math.round(s[k])
+      })
 
-        s.hunger        = Math.round(s.hunger)
-        s.thirst        = Math.round(s.thirst)
-        s.entertainment = Math.round(s.entertainment)
-        s.toilet        = Math.round(s.toilet)
-        s.energy        = Math.round(s.energy)
-        s.health        = Math.round(s.health)
+      // Poop spawn if toilet empty
+      if (s.toilet === 0 && poopsRef.current.length < 4 && Math.random() < 0.5) {
+        const newPoop  = { id: Date.now(), x: 10 + Math.random() * 70 }
+        const newPoops = [...poopsRef.current, newPoop]
+        setPoops(newPoops)
+        poopsRef.current = newPoops
+        localStorage.setItem(POOPS_KEY, JSON.stringify(newPoops))
+      }
 
-        statsRef.current = s
-        setStats(s)
-
-        // Poop spawn if toilet empty
-        if (s.toilet === 0 && poopsRef.current.length < 4 && Math.random() < 0.5) {
-          const newPoop  = { id: Date.now(), x: 10 + Math.random() * 70 }
-          const newPoops = [...poopsRef.current, newPoop]
-          setPoops(newPoops)
-          poopsRef.current = newPoops
-          localStorage.setItem(POOPS_KEY, JSON.stringify(newPoops))
-        }
-
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...saved, stats: s, lastSaved: now }))
-      } catch {}
+      const newSave = { ...save, stats: s, lastSaved: now }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newSave))
+      statsRef.current = s
+      setStats(s)
     }
 
-    const interval = setInterval(recalculateStats, 30 * 1000)
-    return () => clearInterval(interval)
-  }, [pokemon])
+    tick()
+    const id = setInterval(tick, 15000)
+    return () => clearInterval(id)
+  }, [])
+
+  // ── Cooldown 1s decrement ─────────────────────────────────
+  useEffect(() => {
+    const id = setInterval(() => {
+      setCooldowns(prev => {
+        const next = { ...prev }
+        let changed = false
+        for (const k of ['hunger', 'thirst', 'toilet']) {
+          if (next[k] > 0) { next[k]--; changed = true }
+        }
+        return changed ? next : prev
+      })
+    }, 1000)
+    return () => clearInterval(id)
+  }, [])
 
   // ── Stats update listener (from BagScreen item use) ───────
   useEffect(() => {
@@ -814,8 +824,14 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
   const handleAction = useCallback((statKey) => {
     setStats(prev => {
       if (!prev) return prev
+      const wasBelow100 = prev[statKey] < 100
       const next = { ...prev, [statKey]: GAME_CONFIG[statKey].max }
       statsRef.current = next
+
+      if (!wasBelow100) {
+        writeSave(pokemon, next, xpRef.current, levelRef.current)
+        return next
+      }
 
       const newXp = xpRef.current + GAME_CONFIG.xp.perAction
       xpRef.current = newXp
@@ -1454,20 +1470,33 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
           <p className={s.sectionLabel}>Actions</p>
           <div className={s.actionsGrid}>
             {[
-              { key: 'hunger',        label: 'Nourrir',   icon: <IconFork/>    },
-              { key: 'thirst',        label: 'Hydrater',  icon: <IconDrop/>    },
-              { key: 'entertainment', label: 'Jouer',     icon: <IconStar/>    },
-              { key: 'toilet',        label: 'Toilettes', icon: <IconExclaim/> },
-            ].map(({ key, label, icon }) => (
-              <button
-                key={key}
-                className={s.actionBtn}
-                onClick={() => handleAction(key)}
-              >
-                {icon}
-                <span className={s.actionLabel}>{label}</span>
-              </button>
-            ))}
+              { key: 'hunger',  label: 'Nourrir',   icon: <IconFork/>    },
+              { key: 'thirst',  label: 'Hydrater',  icon: <IconDrop/>    },
+              { key: 'entertainment', label: 'Jouer', icon: <IconStar/>   },
+              { key: 'toilet',  label: 'Toilettes', icon: <IconExclaim/> },
+            ].map(({ key, label, icon }) => {
+              const isPlay = key === 'entertainment'
+              const cd = isPlay ? 0 : (cooldowns[key] || 0)
+              return (
+                <button
+                  key={key}
+                  className={s.actionBtn}
+                  disabled={cd > 0}
+                  style={cd > 0 ? { opacity: 0.5 } : undefined}
+                  onClick={() => {
+                    if (isPlay) {
+                      setShowMinigames(true)
+                    } else {
+                      handleAction(key)
+                      setCooldowns(prev => ({ ...prev, [key]: 60 }))
+                    }
+                  }}
+                >
+                  {icon}
+                  <span className={s.actionLabel}>{cd > 0 ? `${cd}s` : label}</span>
+                </button>
+              )
+            })}
             <button className={`${s.actionBtn} ${s.chenilBtn}`} onClick={handleOpenChenil}>
               <KennelIcon/>
               <span className={s.actionLabel}>Chenil</span>
@@ -1518,6 +1547,68 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
           onClose={() => setLevelUpData(null)}
         />
       )}
+
+      {/* ── Overlay derrière le drawer mini-jeux ── */}
+      {showMinigames && (
+        <div
+          style={{ position: 'absolute', inset: 0, zIndex: 99, background: 'transparent' }}
+          onClick={() => {
+            setMinigamesClosing(true)
+            setTimeout(() => { setShowMinigames(false); setMinigamesClosing(false) }, 350)
+          }}
+        />
+      )}
+
+      {/* ── Drawer mini-jeux ── */}
+      {showMinigames && (() => {
+        let scores = {}
+        try { scores = JSON.parse(localStorage.getItem(`poketama_scores_${pokemon.id}`)) || {} } catch {}
+        const closeMinigames = () => {
+          setMinigamesClosing(true)
+          setTimeout(() => { setShowMinigames(false); setMinigamesClosing(false) }, 350)
+        }
+        return (
+          <div
+            className={`${s.bagDrawer} ${minigamesClosing ? s.bagDrawerClosing : ''}`}
+            style={{ zIndex: 100 }}
+          >
+            <div className={s.minigamesDrawer}>
+              <div className={s.minigamesHeader}>
+                <div>
+                  <p className={s.minigamesTitle}>Mini-jeux</p>
+                  <p className={s.minigamesSubtitle}>Score sauvegardé par Pokémon</p>
+                </div>
+                <button className={s.minigamesClose} onClick={closeMinigames}>×</button>
+              </div>
+              <div className={s.minigamesGrid}>
+                {MINIGAMES.map(game => (
+                  <div key={game.id} className={s.minigameCard}>
+                    <div
+                      className={s.minigameCardIllus}
+                      style={{ background: `linear-gradient(135deg, ${game.color}28 0%, ${game.color}55 100%)` }}
+                    >
+                      <span className={s.minigameCardIcon}>{game.icon}</span>
+                    </div>
+                    <p className={s.minigameCardName}>{game.name}</p>
+                    <p className={s.minigameCardScore}>
+                      Record : {scores[game.id] > 0 ? scores[game.id] : '--'}
+                    </p>
+                    <span className={s.minigameBadgeSoon}>Bientôt</span>
+                  </div>
+                ))}
+                <div className={`${s.minigameCard} ${s.minigameCardPlaceholder}`}>
+                  <div className={s.minigameCardIllus} style={{ background: 'rgba(255,255,255,0.03)' }}>
+                    <span className={s.minigameCardIcon}>✦</span>
+                  </div>
+                  <p className={s.minigameCardName}>À venir</p>
+                  <p className={s.minigameCardScore}>—</p>
+                  <span className={s.minigameBadgeSoon}>Bientôt</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {showChenil && chenilData && (
         <div className={s.chenilOverlay}>

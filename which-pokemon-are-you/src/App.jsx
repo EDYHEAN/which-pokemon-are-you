@@ -7,7 +7,7 @@ import PokemonHome from './components/PokemonHome'
 import TabBar from './components/TabBar'
 import DexScreen from './components/DexScreen'
 import AccountScreen from './components/AccountScreen'
-import { addToDex, STORAGE_KEY, INVENTORY_KEY, DEX_KEY, PROGRESS_KEY, loadProgress, saveProgress } from './config/gameConfig'
+import { addToDex, STORAGE_KEY, INVENTORY_KEY, DEX_KEY, PROGRESS_KEY, loadProgress, saveProgress, freshStats } from './config/gameConfig'
 import EvolutionOverlay from './components/EvolutionOverlay'
 import './App.css'
 
@@ -355,6 +355,13 @@ export default function App() {
                 onConfirm={(customName, isShiny = false) => {
                   const updatedPokemon = { ...hatchData.pokemon, name: customName, isShiny }
                   setHatchData(d => ({ ...d, pokemon: updatedPokemon }))
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    pokemon: { id: updatedPokemon.id, name: updatedPokemon.name, isShiny: updatedPokemon.isShiny ?? false },
+                    stats: freshStats(),
+                    xp: 0,
+                    level: 1,
+                    lastSaved: Date.now(),
+                  }))
                   addToDex(updatedPokemon)
 
                   if (rehatchRef.current) {

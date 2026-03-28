@@ -9,14 +9,15 @@ import scene3 from '../assets/scenes/scene3.png'
 import scene4 from '../assets/scenes/scene4.png'
 import { HAT_CATALOG } from '../config/hatCatalog'
 import BagScreen from './BagScreen'
+import CatchGame from './minigames/CatchGame'
 
 const scenes = [scene1, scene2, scene3, scene4]
 
 const DECAY_RATES = {
-  hunger:        1 / 45,
-  thirst:        1 / 30,
-  entertainment: 1 / 35,
-  toilet:        1 / 180,
+  hunger:        1 / 20,
+  thirst:        1 / 15,
+  entertainment: 1 / 25,
+  toilet:        1 / 60,
 }
 
 const MINIGAMES = [
@@ -155,6 +156,12 @@ function writeSave(pokemon, stats, xp, level) {
 
 
 // ── Wild Pokémon pool ─────────────────────────────────────────
+const WILD_LANES = [
+  { bottom: '8%',  scale: 0.7,  zIndex: 2 },  // loin (petit)
+  { bottom: '18%', scale: 0.85, zIndex: 4 },  // milieu
+  { bottom: '28%', scale: 1.0,  zIndex: 6 },  // proche (grand)
+]
+
 const WILD_POOL = [
   { id: 16, name: 'Roucool' },
   { id: 19, name: 'Ratata' },
@@ -271,6 +278,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
   const [cooldowns,       setCooldowns]       = useState({ hunger: 0, thirst: 0, toilet: 0 })
   const [showMinigames,   setShowMinigames]   = useState(false)
   const [minigamesClosing, setMinigamesClosing] = useState(false)
+  const [currentGame,     setCurrentGame]     = useState(null)  // 'catch' | null
   const [pokemonPos,   setPokemonPos]   = useState(50)         // % horizontal in habitat
   const [isWalking,    setIsWalking]    = useState(false)
   const [facingLeft,   setFacingLeft]   = useState(false)
@@ -321,15 +329,10 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
       const minutes = elapsed / 60000
       const s = { ...save.stats }
       const hour = new Date().getHours()
-      s.hunger        = Math.max(0, s.hunger        - minutes / 45)
-      s.thirst        = Math.max(0, s.thirst        - minutes / 30)
-      s.entertainment = Math.max(0, s.entertainment - minutes / 35)
-      s.toilet        = Math.max(0, s.toilet        - minutes / 180)
-      if (hour >= 8 && hour < 22) {
-        s.energy = Math.max(0, s.energy - (minutes / (14 * 60)) * 100)
-      } else {
-        s.energy = Math.min(100, s.energy + minutes * 10 / 60)
-      }
+      s.hunger        = Math.max(0, s.hunger        - DECAY_RATES.hunger        * minutes)
+      s.thirst        = Math.max(0, s.thirst        - DECAY_RATES.thirst        * minutes)
+      s.entertainment = Math.max(0, s.entertainment - DECAY_RATES.entertainment * minutes)
+      s.toilet        = Math.max(0, s.toilet        - DECAY_RATES.toilet        * minutes)
       const needsAt0 = ['hunger','thirst','entertainment','toilet'].filter(k => s[k] <= 0).length
       if (needsAt0 > 0 && elapsed > 2 * 60 * 60 * 1000) {
         const dmgHours = (elapsed - 2 * 60 * 60 * 1000) / 3600000
@@ -564,14 +567,14 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
 
       const s = { ...save.stats }
 
-      s.hunger        = Math.max(0, s.hunger        - DECAY_RATES.hunger        * minutes)
-      s.thirst        = Math.max(0, s.thirst        - DECAY_RATES.thirst        * minutes)
-      s.entertainment = Math.max(0, s.entertainment - DECAY_RATES.entertainment * minutes)
-      s.toilet        = Math.max(0, s.toilet        - DECAY_RATES.toilet        * minutes)
-
-      const hour = new Date().getHours()
-      if (hour >= 8 && hour < 22) {
-        s.energy = Math.max(0, s.energy - (minutes / 840) * 100)
+      if (godMode) {
+        s.hunger = 100; s.thirst = 100; s.entertainment = 100
+        s.toilet = 100; s.health = 100; s.energy = 100
+      } else {
+        s.hunger        = Math.max(0, s.hunger        - DECAY_RATES.hunger        * minutes)
+        s.thirst        = Math.max(0, s.thirst        - DECAY_RATES.thirst        * minutes)
+        s.entertainment = Math.max(0, s.entertainment - DECAY_RATES.entertainment * minutes)
+        s.toilet        = Math.max(0, s.toilet        - DECAY_RATES.toilet        * minutes)
       }
 
       Object.keys(s).forEach(k => {
@@ -596,7 +599,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
     tick()
     const id = setInterval(tick, 15000)
     return () => clearInterval(id)
-  }, [])
+  }, [godMode])
 
   // ── Cooldown 1s decrement ─────────────────────────────────
   useEffect(() => {
@@ -698,6 +701,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
           if (active.length >= 3) return prev
           const pick = WILD_POOL[Math.floor(Math.random() * WILD_POOL.length)]
           const dir = Math.random() < 0.5 ? 1 : -1
+          const lane = WILD_LANES[Math.floor(Math.random() * WILD_LANES.length)]
           const newWild = {
             id: Date.now(),
             pokemonId: pick.id,
@@ -712,6 +716,9 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
             facingLeft: dir < 0,
             isPaused: false,
             pauseTimer: 0,
+            bottom: lane.bottom,
+            scale: lane.scale,
+            zIndex: lane.zIndex,
           }
           return [...active, newWild]
         })
@@ -756,6 +763,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
         if (active.length >= 3) return prev
         const pick = WILD_POOL[Math.floor(Math.random() * WILD_POOL.length)]
         const dir = Math.random() < 0.5 ? 1 : -1
+        const lane = WILD_LANES[Math.floor(Math.random() * WILD_LANES.length)]
         return [...active, {
           id: Date.now(),
           pokemonId: pick.id,
@@ -766,6 +774,9 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
           isDefeated: false, lastTap: 0,
           direction: dir, facingLeft: dir < 0,
           isPaused: false, pauseTimer: 0,
+          bottom: lane.bottom,
+          scale: lane.scale,
+          zIndex: lane.zIndex,
         }]
       })
     }
@@ -859,6 +870,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
         window.dispatchEvent(new CustomEvent('poketama-level-up'))
         checkLevelEvolution(pokemon.id, pokemon.name, pokemon.isShiny, newLevel)
         next.health = Math.min(100, next.health + 30)
+        next.energy = Math.min(100, next.energy + 10)
       }
 
       writeSave(pokemon, next, xpRef.current, levelRef.current)
@@ -906,7 +918,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
         saveProgress(prog)
         window.dispatchEvent(new CustomEvent('poketama-level-up'))
         checkLevelEvolution(pokemon.id, pokemon.name, pokemon.isShiny, newLevel)
-        const boosted = { ...statsRef.current, health: Math.min(100, statsRef.current.health + 30) }
+        const boosted = { ...statsRef.current, health: Math.min(100, statsRef.current.health + 30), energy: Math.min(100, statsRef.current.energy + 10) }
         statsRef.current = boosted
         setStats(boosted)
       } else {
@@ -981,7 +993,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
         saveProgress(prog)
         window.dispatchEvent(new CustomEvent('poketama-level-up'))
         checkLevelEvolution(pokemon.id, pokemon.name, pokemon.isShiny, newLevel)
-        const boosted = { ...statsRef.current, health: Math.min(100, statsRef.current.health + 30) }
+        const boosted = { ...statsRef.current, health: Math.min(100, statsRef.current.health + 30), energy: Math.min(100, statsRef.current.energy + 10) }
         statsRef.current = boosted
         setStats(boosted)
       } else {
@@ -1004,6 +1016,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
 
       activeWilds.forEach(w => {
         if (w.lastTap !== 0 && now - w.lastTap < 10000) return
+        if (statsRef.current && statsRef.current.energy < 5) return
 
         const newHp = w.hp - 30
 
@@ -1063,6 +1076,40 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
       triggerWildDefeat(wildId, hitX, 15)
     }
   }, [triggerWildDefeat])
+
+  // ── Mini-jeu finish : entertainment +40, +10 XP ──────────
+  const handleMinigameFinish = useCallback(() => {
+    setStats(prev => {
+      if (!prev) return prev
+      const next = { ...prev, entertainment: Math.min(100, prev.entertainment + 40) }
+      statsRef.current = next
+      const rawXp = xpRef.current + 10
+      if (rawXp >= GAME_CONFIG.xp.evolutionThreshold) {
+        const newLevel = levelRef.current + 1
+        levelRef.current = newLevel
+        setLevel(newLevel)
+        xpRef.current = 0
+        setXp(0)
+        const reward = LEVEL_REWARDS[newLevel] || null
+        if (reward) { addToInventory(reward.id, reward.quantity); setBagNotif(true) }
+        setLevelUpData({ level: newLevel, reward: reward || null })
+        const prog = loadProgress()
+        const pi = prog.allPokemon.findIndex(p => p.id === pokemon.id)
+        if (pi >= 0) prog.allPokemon[pi].level = newLevel
+        else prog.allPokemon.push({ id: pokemon.id, name: pokemon.name, level: newLevel })
+        saveProgress(prog)
+        window.dispatchEvent(new CustomEvent('poketama-level-up'))
+        checkLevelEvolution(pokemon.id, pokemon.name, pokemon.isShiny, newLevel)
+        next.health = Math.min(100, next.health + 30)
+        next.energy = Math.min(100, next.energy + 10)
+      } else {
+        xpRef.current = rawXp
+        setXp(rawXp)
+      }
+      writeSave(pokemon, next, xpRef.current, levelRef.current)
+      return next
+    })
+  }, [pokemon])
 
   // ── Chenil ────────────────────────────────────────────────
   const handleOpenChenil = useCallback(() => {
@@ -1204,7 +1251,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
           <div
             key={wild.id}
             className={[s.wildWrap, wildDyings.has(wild.id) ? s.wildDying : ''].filter(Boolean).join(' ')}
-            style={{ left: `${wild.x}%` }}
+            style={{ left: `${wild.x}%`, bottom: wild.bottom ?? '12%', zIndex: wild.zIndex ?? 2 }}
             onClick={(e) => handleWildClick(e, wild.id)}
           >
             <div className={s.wildHpBar}>
@@ -1219,7 +1266,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
                 wild.hp <= 25 && !wild.isDefeated ? s.wildCritical : '',
               ].filter(Boolean).join(' ')}
               style={{
-                transform: `scaleX(${wild.facingLeft ? -1 : 1})`,
+                transform: `scaleX(${wild.facingLeft ? -1 : 1}) scale(${wild.scale ?? 1})`,
               }}
               draggable={false}
             />
@@ -1477,14 +1524,23 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
             ].map(({ key, label, icon }) => {
               const isPlay = key === 'entertainment'
               const cd = isPlay ? 0 : (cooldowns[key] || 0)
+              const tooTired = isPlay && stats.energy < 10
+              const isDisabled = isPlay ? tooTired : cd > 0
               return (
                 <button
                   key={key}
                   className={s.actionBtn}
-                  disabled={cd > 0}
-                  style={cd > 0 ? { opacity: 0.5 } : undefined}
+                  disabled={isDisabled}
+                  style={isDisabled ? { opacity: 0.5 } : undefined}
                   onClick={() => {
                     if (isPlay) {
+                      setStats(prev => {
+                        if (!prev) return prev
+                        const next = { ...prev, energy: Math.max(0, prev.energy - 20) }
+                        statsRef.current = next
+                        writeSave(pokemon, next, xpRef.current, levelRef.current)
+                        return next
+                      })
                       setShowMinigames(true)
                     } else {
                       handleAction(key)
@@ -1493,7 +1549,7 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
                   }}
                 >
                   {icon}
-                  <span className={s.actionLabel}>{cd > 0 ? `${cd}s` : label}</span>
+                  <span className={s.actionLabel}>{tooTired ? 'Trop fatigué !' : cd > 0 ? `${cd}s` : label}</span>
                 </button>
               )
             })}
@@ -1581,21 +1637,39 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
                 <button className={s.minigamesClose} onClick={closeMinigames}>×</button>
               </div>
               <div className={s.minigamesGrid}>
-                {MINIGAMES.map(game => (
-                  <div key={game.id} className={s.minigameCard}>
+                {MINIGAMES.map(game => {
+                  const isCatch = game.id === 'catch'
+                  const isAvailable = isCatch
+                  const disabled = isCatch && stats.energy < 10
+                  return (
                     <div
-                      className={s.minigameCardIllus}
-                      style={{ background: `linear-gradient(135deg, ${game.color}28 0%, ${game.color}55 100%)` }}
+                      key={game.id}
+                      className={s.minigameCard}
+                      style={isAvailable && !disabled ? { cursor: 'pointer' } : undefined}
+                      onClick={isAvailable && !disabled ? () => {
+                        closeMinigames()
+                        setTimeout(() => setCurrentGame('catch'), 350)
+                      } : undefined}
                     >
-                      <span className={s.minigameCardIcon}>{game.icon}</span>
+                      <div
+                        className={s.minigameCardIllus}
+                        style={{ background: `linear-gradient(135deg, ${game.color}28 0%, ${game.color}55 100%)` }}
+                      >
+                        <span className={s.minigameCardIcon}>{game.icon}</span>
+                      </div>
+                      <p className={s.minigameCardName}>{game.name}</p>
+                      <p className={s.minigameCardScore}>
+                        Record : {scores[game.id] > 0 ? scores[game.id] : '--'}
+                      </p>
+                      {isAvailable
+                        ? <span className={s.minigameBadgeSoon} style={{ background: disabled ? 'rgba(120,120,120,0.5)' : 'rgba(74,226,122,0.3)', color: disabled ? '#aaa' : '#4AE27A' }}>
+                            {disabled ? 'Fatigué !' : 'Jouer'}
+                          </span>
+                        : <span className={s.minigameBadgeSoon}>Bientôt</span>
+                      }
                     </div>
-                    <p className={s.minigameCardName}>{game.name}</p>
-                    <p className={s.minigameCardScore}>
-                      Record : {scores[game.id] > 0 ? scores[game.id] : '--'}
-                    </p>
-                    <span className={s.minigameBadgeSoon}>Bientôt</span>
-                  </div>
-                ))}
+                  )
+                })}
                 <div className={`${s.minigameCard} ${s.minigameCardPlaceholder}`}>
                   <div className={s.minigameCardIllus} style={{ background: 'rgba(255,255,255,0.03)' }}>
                     <span className={s.minigameCardIcon}>✦</span>
@@ -1609,6 +1683,13 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
           </div>
         )
       })()}
+
+      {currentGame === 'catch' && (
+        <CatchGame
+          pokemon={pokemon}
+          onClose={() => setCurrentGame(null)}
+        />
+      )}
 
       {showChenil && chenilData && (
         <div className={s.chenilOverlay}>

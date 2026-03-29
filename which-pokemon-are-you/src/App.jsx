@@ -11,18 +11,15 @@ import { addToDex, STORAGE_KEY, INVENTORY_KEY, DEX_KEY, PROGRESS_KEY, loadProgre
 import EvolutionOverlay from './components/EvolutionOverlay'
 import './App.css'
 
-function PikachuIcon() {
+function PokeballLogoIcon() {
   return (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none"
-         stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-      <circle cx="14" cy="15" r="9"/>
-      <path d="M7 8 L5 2 L10 6"/>
-      <path d="M21 8 L23 2 L18 6"/>
-      <circle cx="11" cy="14" r="1.2" fill="currentColor" stroke="none"/>
-      <circle cx="17" cy="14" r="1.2" fill="currentColor" stroke="none"/>
-      <circle cx="9" cy="17" r="1.8" strokeWidth="1"/>
-      <circle cx="19" cy="17" r="1.8" strokeWidth="1"/>
-      <path d="M11.5 19 Q14 21 16.5 19"/>
+         stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="14" cy="14" r="12"/>
+      <path d="M2 14 Q2 3 14 3 Q26 3 26 14"/>
+      <line x1="2" y1="14" x2="26" y2="14"/>
+      <circle cx="14" cy="14" r="3.5" fill="none"/>
+      <circle cx="14" cy="14" r="1.5" fill="currentColor" stroke="none"/>
     </svg>
   )
 }
@@ -140,6 +137,7 @@ export default function App() {
   const [pokemonSwitchKey, setPokemonSwitchKey] = useState(0)
   const [evolutionData, setEvolutionData] = useState(null) // { oldId, oldName, newId, newName, isShiny }
   const [godMode, setGodMode] = useState(() => localStorage.getItem('poketama_godmode') === 'true')
+  const [timeAccel, setTimeAccel] = useState(false)
 
   const rehatchRef = useRef(false)
 
@@ -258,19 +256,10 @@ export default function App() {
         ))}
       </div>
 
-      {/* Mobile day/night toggle */}
-      <button
-        className={`app-toggle ${mode}`}
-        onClick={() => setIsNight(n => !n)}
-        aria-label={isNight ? 'Switch to day' : 'Switch to night'}
-      >
-        {isNight ? <MoonIcon/> : <SunIcon/>}
-      </button>
-
       {/* Desktop sidebar — only on home screen */}
       {showNav && <aside className={`app-sidebar ${mode}`}>
         <div className="sidebar-logo">
-          <PikachuIcon/>
+          <PokeballLogoIcon/>
         </div>
         <nav className="sidebar-nav">
           {SIDEBAR_TABS.map(({ id, label, Icon }) => (
@@ -306,18 +295,63 @@ export default function App() {
             const next = !godMode
             setGodMode(next)
             localStorage.setItem('poketama_godmode', String(next))
+            if (!next && timeAccel) {
+              setTimeAccel(false)
+              window.dispatchEvent(new CustomEvent('poketama-set-timescale', { detail: 1 }))
+            }
           }}
           title="God Mode"
         >
           ⚡
         </button>
-        <button
-          className="sidebar-god"
-          onClick={() => window.dispatchEvent(new CustomEvent('poketama-spawn-wild'))}
-          title="Faire spawner un wild"
-        >
-          <SidePokeballIcon/>
-        </button>
+        {godMode && (<>
+          <button
+            className={`sidebar-god ${timeAccel ? 'sidebar-god-active' : ''}`}
+            onClick={() => {
+              const next = !timeAccel
+              setTimeAccel(next)
+              window.dispatchEvent(new CustomEvent('poketama-set-timescale', { detail: next ? 100 : 1 }))
+            }}
+            title="Accélérer le temps ×100"
+          >
+            ⏩ ×100
+          </button>
+          <button
+            className="sidebar-god"
+            onClick={() => window.dispatchEvent(new CustomEvent('poketama-admin-fillstats'))}
+            title="Jauges full"
+          >
+            💯
+          </button>
+          <button
+            className="sidebar-god"
+            onClick={() => window.dispatchEvent(new CustomEvent('poketama-admin-drain-vitals'))}
+            title="-50 Health & Energy"
+          >
+            💔
+          </button>
+          <button
+            className="sidebar-god"
+            onClick={() => window.dispatchEvent(new CustomEvent('poketama-admin-drain-needs'))}
+            title="-50 Besoins"
+          >
+            📉
+          </button>
+          <button
+            className="sidebar-god"
+            onClick={() => window.dispatchEvent(new CustomEvent('poketama-spawn-wild'))}
+            title="Faire spawner un wild"
+          >
+            <SidePokeballIcon/>
+          </button>
+          <button
+            className="sidebar-god"
+            onClick={() => window.dispatchEvent(new CustomEvent('poketama-admin-addlevels'))}
+            title="+10 niveaux"
+          >
+            ⬆️
+          </button>
+        </>)}
         <button
           className="sidebar-toggle"
           onClick={() => setIsNight(n => !n)}

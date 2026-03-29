@@ -14,7 +14,10 @@
       "Bash(npm list:*)",
       "Bash(powershell -Command \":*)",
       "Bash(npx vite:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(find C:UsersJohanDocumentsGithub_projectswhich-pokemon-are-youwhich-pokemon-are-yousrc -name *PokeJump* -o -name *EndlessRun* -o -name *Jump* -o -name *Run*)",
+      "Bash(npx --yes eslint src/components/PokemonHome.jsx src/components/minigames/CatchGame.jsx src/App.jsx --rule '{\"\"\"\"react-hooks/rules-of-hooks\"\"\"\": \"\"\"\"error\"\"\"\", \"\"\"\"no-undef\"\"\"\": \"\"\"\"error\"\"\"\"}')",
+      "Bash(npx eslint:*)"
     ]
   }
 }

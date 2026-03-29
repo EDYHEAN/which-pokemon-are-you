@@ -209,7 +209,7 @@ export default function CatchGame({ pokemon, onClose }) {
       if (raw) {
         const save = JSON.parse(raw)
         save.stats.entertainment = Math.min(100, (save.stats.entertainment || 0) + 40)
-        save.stats.energy        = Math.max(0,   (save.stats.energy        || 0) - 10)
+        save.stats.energy        = Math.max(0,   (save.stats.energy        || 0) - 8)
         save.xp                  = (save.xp || 0) + 10
         save.lastSaved           = Date.now()
         localStorage.setItem('poketama_save', JSON.stringify(save))

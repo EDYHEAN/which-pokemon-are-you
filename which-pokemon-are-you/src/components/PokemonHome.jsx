@@ -13,6 +13,11 @@ import CatchGame from './minigames/CatchGame'
 
 const scenes = [scene1, scene2, scene3, scene4]
 
+// Module-level guard: prevents Strict Mode double-mount from re-running the
+// offline catch-up (which would find lastSaved=now and write fresh stats).
+// Keyed by pokemon ID so pokemon switches still trigger their own catch-up.
+const _catchUpApplied = new Set()
+
 const DECAY_RATES = {
   hunger:        1 / 20,
   thirst:        1 / 15,
@@ -346,10 +351,14 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
     let initStats, initXp, initLevel
 
     if (save) {
-      const elapsed = Date.now() - (save.lastSaved || Date.now())
+      const now = Date.now()
+      const elapsed = now - (save.lastSaved || now)
       const minutes = elapsed / 60000
+      console.log('[INIT] lastSaved from localStorage:', save.lastSaved)
+      console.log('[INIT] now:', now)
+      console.log('[INIT] minutesElapsed:', minutes)
+      console.log('[INIT] stats before catch-up:', { ...save.stats })
       const s = { ...save.stats }
-      const hour = new Date().getHours()
       s.hunger        = Math.max(0, s.hunger        - DECAY_RATES.hunger        * minutes)
       s.thirst        = Math.max(0, s.thirst        - DECAY_RATES.thirst        * minutes)
       s.entertainment = Math.max(0, s.entertainment - DECAY_RATES.entertainment * minutes)
@@ -369,6 +378,19 @@ export default function PokemonHome({ pokemon, isNight, onSwitchPokemon, godMode
       initStats = s
       initXp    = save.xp    ?? 0
       initLevel = save.level ?? 1
+      console.log('[INIT] stats after catch-up:', { ...initStats })
+      // Persist the catch-up decay immediately so the stats ticker starts from now.
+      // Guard prevents Strict Mode's second mount from overwriting with elapsed=0.
+      if (!_catchUpApplied.has(pokemon.id)) {
+        _catchUpApplied.add(pokemon.id)
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            ...save,
+            stats: initStats,
+            lastSaved: now,
+          }))
+        } catch { /* ignore quota errors */ }
+      }
     } else {
       initStats = freshStats()
       initXp    = 0

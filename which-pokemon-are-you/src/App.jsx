@@ -202,6 +202,20 @@ export default function App() {
     setActiveTab('home')
   }
 
+  function handleResume() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (!raw) return false
+      const save = JSON.parse(raw)
+      if (!save?.pokemon?.id) return false
+      setHatchData({ egg: null, pokemon: save.pokemon })
+      goTo('home')
+      return true
+    } catch {
+      return false
+    }
+  }
+
   function handleReset() {
     localStorage.removeItem(STORAGE_KEY)
     localStorage.removeItem(INVENTORY_KEY)
@@ -439,6 +453,7 @@ export default function App() {
               <Landing
                 isNight={isNight}
                 onChoose={() => goTo('name')}
+                onResume={handleResume}
               />
             )}
           </div>

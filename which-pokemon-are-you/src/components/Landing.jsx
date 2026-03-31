@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import s from './Landing.module.css'
 
 const gen1Pool = [
@@ -44,10 +44,22 @@ function Pokeball() {
   )
 }
 
-export default function Landing({ isNight, onChoose }) {
+export default function Landing({ isNight, onChoose, onResume }) {
   const [hoverPokemon, setHoverPokemon] = useState(null)
   const [isExiting, setIsExiting] = useState(false)
-  const [showModal, setShowModal] = useState(false)
+  const [toast, setToast] = useState(null)
+  const toastTimer = useRef(null)
+
+  const showToast = (msg) => {
+    clearTimeout(toastTimer.current)
+    setToast(msg)
+    toastTimer.current = setTimeout(() => setToast(null), 2500)
+  }
+
+  const handleResume = () => {
+    const ok = onResume?.()
+    if (!ok) showToast('Aucune save trouvée')
+  }
 
   const handleCtaEnter = useCallback(() => {
     const pokemon = gen1Pool[Math.floor(Math.random() * gen1Pool.length)]
@@ -128,60 +140,30 @@ export default function Landing({ isNight, onChoose }) {
             textDecoration: 'underline',
             textUnderlineOffset: '3px',
           }}
-          onClick={() => setShowModal(true)}
+          onClick={handleResume}
         >
           Déjà dresseur ? Se connecter
         </p>
       </div>
 
-      {showModal && (
-        <div
-          style={{
-            position: 'fixed', inset: 0, zIndex: 999,
-            background: 'rgba(0,0,0,0.5)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 24,
-          }}
-          onClick={() => setShowModal(false)}
-        >
-          <div
-            style={{
-              background: isNight ? 'rgba(20,20,30,0.98)' : 'rgba(255,255,255,0.98)',
-              backdropFilter: 'blur(24px)',
-              border: isNight ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.08)',
-              borderRadius: 20,
-              padding: '32px 24px',
-              maxWidth: 300,
-              width: '100%',
-              textAlign: 'center',
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            <p style={{
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: 13, fontWeight: 300, lineHeight: 1.65,
-              color: isNight ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.65)',
-              margin: '0 0 24px',
-            }}>
-              La connexion cloud arrive bientôt.<br />
-              Votre progression est sauvegardée localement sur cet appareil.
-            </p>
-            <button
-              onClick={() => setShowModal(false)}
-              style={{
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: 13, fontWeight: 300,
-                background: isNight ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
-                border: isNight ? '1px solid rgba(255,255,255,0.15)' : '1px solid rgba(0,0,0,0.1)',
-                borderRadius: 999,
-                padding: '8px 28px',
-                color: isNight ? 'white' : '#1a1a1a',
-                cursor: 'pointer',
-              }}
-            >
-              OK
-            </button>
-          </div>
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 999,
+          background: 'rgba(30,30,40,0.92)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(255,255,255,0.12)',
+          borderRadius: 999,
+          padding: '10px 22px',
+          color: 'rgba(255,255,255,0.85)',
+          fontSize: 12,
+          fontFamily: "'DM Sans', sans-serif",
+          fontWeight: 300,
+          letterSpacing: '0.05em',
+          whiteSpace: 'nowrap',
+          pointerEvents: 'none',
+        }}>
+          {toast}
         </div>
       )}
 
